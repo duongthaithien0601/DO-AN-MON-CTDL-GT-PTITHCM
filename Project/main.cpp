@@ -1,7 +1,6 @@
 ﻿#include <iostream>
 #include <vector>
 #include <string>
-
 #include "cautruc.h"
 #include "dsdms.h"
 #include "dsdocgia.h"
@@ -13,7 +12,6 @@
 int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
-
     std::vector<DauSach*> dsArr;
     DocGiaNode* root = NULL;
 
@@ -21,12 +19,10 @@ int main() {
         std::cout << "Tai du lieu that bai. Chuong trinh se khoi dong voi CSDL rong.\n";
         dsArr.clear();
         root = NULL;
-    }
+    }    
 
-    // Gọi đúng hàm trong UI (giữ nguyên menu_tui.h)
-    menutui::menu_main_tui(dsArr, root);
-    
-    // Lưu & giải phóng
+    menutui::menu_main_tui(dsArr, root);   
+   
     if (save_all_data(dsArr, root)) {
         std::cout << "Da luu du lieu. Tam biet!\n";
     }

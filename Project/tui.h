@@ -245,6 +245,9 @@ namespace tui {
     }
 
     inline void drawBox(int x, int y, int w, int h, const std::string& title) {
+       
+        tui::setColor(tui::FG_HL);
+
         if (w < 4) { w = 4; }
         if (h < 3) { h = 3; }
 
@@ -290,4 +293,12 @@ namespace tui {
             if (e.key == K_ESC) { break; }
         }
     } 
+
+    // Xóa một vùng chữ (không đụng viền)
+    inline void clear_rect(int x, int y, int w, int h) {
+        for (int r = 0; r < h; ++r) {
+            gotoxy(x, y + r);
+            std::cout << std::string(w, ' ');
+        }
+    }
 }

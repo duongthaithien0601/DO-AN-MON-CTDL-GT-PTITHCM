@@ -17,7 +17,6 @@
 #include "dsdms.h"
 #include "dsmuontra.h"
 
-
 namespace menutui {
 
     //==================== Khung menu ====================//
@@ -30,21 +29,56 @@ namespace menutui {
     }
     inline void print_menu_item(int x, int y, const std::string& text, bool selected) {
         tui::gotoxy(x, y);
-        if (selected) std::cout << "\x1b[7m" << text << "\x1b[0m";
-        else         std::cout << text;
+        if (selected) {            
+            std::cout << "\x1b[7m" << text << "\x1b[0m";
+            tui::setColor(tui::FG_HL);         
+        }
+        else {
+            tui::setColor(tui::FG_HL);         
+            std::cout << text;
+        }
     }
-    inline int menu_mui_ten(int x, int /*y*/, const std::string& title, const std::vector<std::string>& items) {
-        int cur = 0; const int MENU_Y = 6;
+    inline int menu_mui_ten(int x, int /*y*/, const std::string& title,
+        const std::vector<std::string>& items) {
+        const int MENU_Y = 6;
+        int cur = 0;        
+        int w = 0, h = 0;
+        draw_menu_frame(title, (int)items.size(), w, h);
+        int footerY = 1 + h - 2;        
+        int pad = 0;
+        for (auto& s : items) pad = std::max(pad, (int)s.size());
+        
+        auto paint_one = [&](int idx, bool selected) {
+            tui::gotoxy(x, MENU_Y + idx);
+            if (selected) {
+                std::cout << "\x1b[7m" << items[idx];
+                int sp = pad - (int)items[idx].size();
+                if (sp > 0) std::cout << std::string(sp, ' ');
+                std::cout << "\x1b[0m";        
+                tui::setColor(tui::FG_HL);     
+            }
+            else {
+                tui::setColor(tui::FG_HL);     
+                std::cout << items[idx];
+                int sp = pad - (int)items[idx].size();
+                if (sp > 0) std::cout << std::string(sp, ' ');
+            }
+            };
+        
+        for (size_t i = 0; i < items.size(); ++i) paint_one((int)i, (int)i == cur);
+        tui::print_footer_hints(4, footerY, "[Up/Down] Chon  -  [Enter] Xac nhan  -  [Esc] Quay lai");
+                
         while (true) {
-            int w = 0, h = 0; draw_menu_frame(title, (int)items.size(), w, h);
-            for (size_t i = 0; i < items.size(); ++i) print_menu_item(x, (int)(MENU_Y + i), items[i], (int)i == cur);
-            int footerY = 1 + h - 2;
-            tui::print_footer_hints(4, footerY, "[Up/Down] Chon  -  [Enter] Xac nhan  -  [Esc] Quay lai");
             auto e = tui::readKey();
-            if (e.key == tui::K_UP) cur = (cur + (int)items.size() - 1) % (int)items.size();
+            int prev = cur;
+            if (e.key == tui::K_UP)      cur = (cur + (int)items.size() - 1) % (int)items.size();
             else if (e.key == tui::K_DOWN) cur = (cur + 1) % (int)items.size();
-            else if (e.key == tui::K_ESC) return (int)items.size() - 1;
+            else if (e.key == tui::K_ESC)   return (int)items.size() - 1;
             else if (e.key == tui::K_ENTER) return cur;
+            if (cur != prev) {            
+                paint_one(prev, false);
+                paint_one(cur, true);
+            }
         }
     }
 
@@ -371,13 +405,7 @@ namespace menutui {
     inline void ui_ds_in_theo_the_loai(std::vector<DauSach*>& dsArr) {
         const int w = 118, h = 30, X0 = 4;
         const int footerY = 1 + h - 2;
-        const int yMax = 1 + h - 3;
-
-        auto draw_header = [&](const std::string& title) {
-            tui::clearScreen();
-            tui::drawBox(2, 1, w, h, title);
-            };
-
+        const int yMax = 1 + h - 3;       
         std::map<std::string, std::vector<DauSach*>> groups;
         for (auto* ds : dsArr) {
             if (ds != NULL) {
@@ -390,17 +418,15 @@ namespace menutui {
                 if (a->tenSach != b->tenSach) { return a->tenSach < b->tenSach; }
                 return a->ISBN < b->ISBN;
                 });
-        }
-
+        }        
         std::vector<std::string> linesOut;
         for (auto& kv : groups) {
             const std::string theLoai = kv.first;
             const auto& v = kv.second;
-
             linesOut.push_back("The loai: " + theLoai + " (So dau sach: " + std::to_string((int)v.size()) + ")");
             for (auto* ds : v) {
-                std::string ten = ds->tenSach; if ((int)ten.size() > 45) ten = ten.substr(0, 45);
-                std::string tg = ds->tacGia;  if ((int)tg.size() > 24) tg = tg.substr(0, 24);
+                std::string ten = ds->tenSach; if ((int)ten.size() > 45) { ten = ten.substr(0, 45); }
+                std::string tg = ds->tacGia;  if ((int)tg.size() > 24) { tg = tg.substr(0, 24); }
                 int soBan = dms_count_total(ds);
                 std::string viTri = lay_vi_tri_chung(ds);
 
@@ -413,42 +439,46 @@ namespace menutui {
                 linesOut.push_back(line);
             }
             linesOut.push_back(std::string());
-        }
-
+        }        
         if (linesOut.empty()) {
-            draw_header("QUAN LY DAU SACH  >  DANH SACH THEO THE LOAI  (Trang 1/1)");
+            tui::clearScreen();
+            tui::drawBox(2, 1, w, h, "QUAN LY DAU SACH  >  DANH SACH THEO THE LOAI");
+            tui::setColor(tui::FG_HL);
             tui::gotoxy(X0, 5); std::cout << "(Khong co dau sach.)";
             tui::print_footer_hints(4, footerY, "[Esc] Quay lai");
             while (true) { tui::KeyEvent e = tui::readKey(); if (e.key == tui::K_ESC) { return; } }
-        }
-
+        }        
         const int startY = 5;
         const int CAP = yMax - startY + 1;
         const int total = (int)linesOut.size();
         const int pages = (total + CAP - 1) / CAP;
-        int page = 0;
-
-        auto render = [&](int p) {
-            std::string title = "QUAN LY DAU SACH  >  DANH SACH THEO THE LOAI  (Trang "
-                + std::to_string(p + 1) + "/" + std::to_string(pages) + ")";
-            draw_header(title);
+        int page = 0;        
+        tui::clearScreen();
+        tui::drawBox(2, 1, w, h, "QUAN LY DAU SACH  >  DANH SACH THEO THE LOAI");
+        tui::print_footer_hints(4, footerY, "[Up/Down] Trang truoc/sau   -   [Esc] Quay lai");
+        tui::setColor(tui::FG_HL);         
+        auto paint_page_hint = [&](int p) {
+            tui::gotoxy(4, 3);
+            std::cout << "(Trang " << (p + 1) << "/" << std::max(1, pages) << ")"
+                << std::string(20, ' ');
+            };        
+        auto paint_page = [&](int p) {
+            paint_page_hint(p);
+            tui::clear_rect(4, startY, w - 8, CAP); 
             int y = startY;
             int from = p * CAP;
-            int to = from + CAP; if (to > total) { to = total; }
+            int to = std::min(total, from + CAP);
             for (int i = from; i < to; ++i) {
-                tui::gotoxy(X0, y++); std::cout << linesOut[i];
+                tui::gotoxy(X0, y++);
+                std::cout << linesOut[i];
             }
-            tui::print_footer_hints(4, footerY, "[Up/Down] Trang truoc/sau   -   [Esc] Quay lai");
-            };
-
+            };        
+        paint_page(page);        
         while (true) {
-            render(page);
-            while (true) {
-                tui::KeyEvent ev = tui::readKey();
-                if (ev.key == tui::K_ESC) { return; }
-                if (ev.key == tui::K_UP) { if (page > 0) { --page; break; } }
-                if (ev.key == tui::K_DOWN) { if (page + 1 < pages) { ++page; break; } }
-            }
+            tui::KeyEvent ev = tui::readKey();
+            if (ev.key == tui::K_ESC) { return; }
+            if (ev.key == tui::K_UP) { if (page > 0) { --page; paint_page(page); } }
+            if (ev.key == tui::K_DOWN) { if (page + 1 < pages) { ++page; paint_page(page); } }
         }
     }
 
@@ -456,37 +486,42 @@ namespace menutui {
     inline void ui_ds_tim_theo_ten(std::vector<DauSach*>& dsArr) {
         const int w = 118, h = 30, X0 = 4;
         const int footerY = 1 + h - 2;
-        const int yMax = 1 + h - 3;
-        auto draw_header = [&](const std::string& sub) {
-            tui::clearScreen();
-            tui::drawBox(2, 1, w, h, "QUAN LY DAU SACH  >  TIM THEO TEN" + (sub.empty() ? "" : ("  " + sub)));
-            };
-
-        draw_header("");
+        const int yMax = 1 + h - 3;        
+        tui::clearScreen();
+        tui::drawBox(2, 1, w, h, "QUAN LY DAU SACH  >  TIM THEO TEN");
+        tui::setColor(tui::FG_HL);
         int y = 4;
-        tui::gotoxy(X0, y); std::cout << "Nhap tu khoa ten sach: "; int qX = X0 + 24, qY = y; y += 2;
+        tui::gotoxy(X0, y); std::cout << "Nhap tu khoa ten sach: ";
+        int qX = X0 + 24, qY = y; y += 2;
         tui::print_footer_hints(4, footerY, "[Enter] Tim  -  [Esc] Quay lai");
         _flush_input_nonblock();
         std::string q = _read_line_at(qX, qY, 64);
         if (q.empty()) {
-            tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT); std::cout << "Tu khoa khong duoc rong."; tui::resetColor();
-            tui::press_any_key_to_back(4, footerY - 1); return;
-        }
-
+            tui::gotoxy(X0, footerY - 2);
+            tui::setColor(tui::FG_ALERT); std::cout << "Tu khoa khong duoc rong.";
+            tui::resetColor();
+            tui::press_any_key_to_back(4, footerY - 1);
+            return;
+        }       
         std::vector<DauSach*> found = tim_dau_sach_theo_ten(dsArr, q);
-
         std::vector<std::string> linesOut;
-        auto fmt_line = [&](const std::string& s) -> std::string { if ((int)s.size() <= w - 8) return s; return s.substr(0, w - 8); };
+        auto fmt_line = [&](const std::string& s) -> std::string {
+            if ((int)s.size() <= w - 8) return s;
+            return s.substr(0, w - 8);
+            };
         auto trang_thai_str = [&](int st) -> std::string {
             if (st == BANSAO_CHO_MUON) return "CHO MUON";
-            if (st == BANSAO_DA_MUON) return "DA MUON";        
+            if (st == BANSAO_DA_MUON) return "DA MUON";
             return "?";
-            };
-        if (found.empty()) {
-            draw_header("(0 ket qua)");
+        };
+
+        if (found.empty()) {            
             tui::gotoxy(X0, 6); std::cout << "Khong tim thay dau sach phu hop.";
             tui::print_footer_hints(4, footerY, "[Esc] Quay lai");
-            while (true) { tui::KeyEvent e = tui::readKey(); if (e.key == tui::K_ESC) return; }
+            while (true) {
+                tui::KeyEvent e = tui::readKey();
+                if (e.key == tui::K_ESC) return;
+            }
         }
         for (size_t i = 0; i < found.size(); ++i) {
             DauSach* ds = found[i];
@@ -509,26 +544,37 @@ namespace menutui {
             }
             linesOut.push_back(fmt_line(cur));
             linesOut.push_back("");
-        }
+        }        
         const int startY = 5;
         const int CAP = yMax - startY + 1;
         const int total = (int)linesOut.size();
         const int pages = (total + CAP - 1) / CAP;
-        int page = 0;
-        auto render = [&](int p) {
-            std::string sub = "(Trang " + std::to_string(p + 1) + "/" + std::to_string(std::max(1, pages)) + ")";
-            draw_header(sub);
+        int page = 0;        
+        tui::clearScreen();
+        tui::drawBox(2, 1, w, h, "QUAN LY DAU SACH  >  TIM THEO TEN");
+        tui::print_footer_hints(4, footerY, "[Up/Down] Trang  -  [Esc] Quay lai");
+        tui::setColor(tui::FG_HL);        
+        auto paint_page_hint = [&](int p) {
+            tui::gotoxy(4, 3);
+            std::cout << "(Trang " << (p + 1) << "/" << std::max(1, pages) << ")"
+                << std::string(20, ' ');
+        };        
+        auto paint_page = [&](int p) {
+            paint_page_hint(p);
+            tui::clear_rect(4, startY, w - 8, CAP); 
             int y2 = startY;
             int start = p * CAP, end = std::min(total, start + CAP);
-            for (int i = start; i < end; ++i) { tui::gotoxy(X0, y2++); std::cout << linesOut[i]; }
-            tui::print_footer_hints(4, footerY, "[Up/Down] Trang  -  [Esc] Quay lai");
-            };
+            for (int i = start; i < end; ++i) {
+                tui::gotoxy(X0, y2++);
+                std::cout << linesOut[i];
+            }
+        };
+        paint_page(page);
         while (true) {
-            render(page);
             tui::KeyEvent ev = tui::readKey();
             if (ev.key == tui::K_ESC) return;
-            if (ev.key == tui::K_UP) { if (page > 0) { --page; } }
-            if (ev.key == tui::K_DOWN) { if (page + 1 < pages) { ++page; } }
+            if (ev.key == tui::K_UP) { if (page > 0) { --page; paint_page(page); } }
+            if (ev.key == tui::K_DOWN) { if (page + 1 < pages) { ++page; paint_page(page); } }
         }
     }
 
@@ -809,7 +855,6 @@ namespace menutui {
             + "-+-" + DASH(CW_TEN) + "-+-" + DASH(CW_NGAY) + "-+-" + DASH(CW_SONG);
         tui::gotoxy(X0, y++); std::cout << header;
         tui::gotoxy(X0, y++); std::cout << sep;
-
         for (size_t i = 0; i < rows.size(); ++i) {
             Row& r = rows[i];
             std::string tenCut = (int)r.ten.size() > CW_TEN ? r.ten.substr(0, CW_TEN) : r.ten;
@@ -837,9 +882,9 @@ namespace menutui {
         std::string t = s; if ((int)t.size() > w) t = t.substr(0, w);
         return t + std::string(w - (int)t.size(), ' ');
     }
-    inline int _draw_docgia_table_header(const std::string& title, int w = 118, int h = 24) {
-        tui::clearScreen(); tui::drawBox(2, 1, w, h, title);
+    inline int _draw_docgia_table_header(const std::string& /*title*/, int /*w*/ = 118, int /*h*/ = 24) {
         int y = 5;
+        tui::setColor(tui::FG_HL); 
         tui::gotoxy(4, y++); std::cout
             << _pad("Ma the", CW_MATHE) << " | "
             << _pad("Ho va Ten Dem", CW_HODEM) << " | "
@@ -851,7 +896,7 @@ namespace menutui {
             << dash(CW_MATHE) << "-+-" << dash(CW_HODEM) << "-+-"
             << dash(CW_TEN) << "-+-" << dash(CW_GIOITINH) << "-+-"
             << dash(CW_TRANGTHAI);
-        return y;
+        return y; 
     }
     inline void _ui_docgia_print_table(const std::vector<DocGia*>& rows, const std::string& title) {
         const int w = 118, h = 24;
@@ -859,13 +904,25 @@ namespace menutui {
         const size_t PAGE = 15;
         const size_t total = rows.size();
         const size_t pages = (total == 0 ? 1 : (total + PAGE - 1) / PAGE);
-        size_t page = 0;
-
-        auto render = [&](size_t curPage) {
-            std::string title2 = title + "  (Trang " + std::to_string((int)curPage + 1) + "/" + std::to_string((int)pages) + ")";
-            int y = _draw_docgia_table_header(title2, w, h);
-            size_t startIdx = curPage * PAGE;
-            size_t endIdx = startIdx + PAGE; if (endIdx > total) endIdx = total;
+        size_t page = 0;        
+        tui::clearScreen();
+        tui::drawBox(2, 1, w, h, title);
+        tui::print_footer_hints(4, footerY, "[Up/Down] Trang truoc/sau   -   [Esc] Quay lai");
+        tui::setColor(tui::FG_HL);         
+        const int dataY = _draw_docgia_table_header(title, w, h);
+        const int dataH = footerY - dataY - 1; 
+        const int dataW = w - 8;          
+        auto paint_page_hint = [&](size_t cur) {
+            tui::gotoxy(4, 3);
+            std::cout << "(Trang " << (int)(cur + 1) << "/" << (int)pages << ")"
+                << std::string(20, ' ');
+        };        
+        auto paint_page = [&](size_t cur) {
+            paint_page_hint(cur);
+            tui::clear_rect(4, dataY, dataW, dataH);
+            size_t startIdx = cur * PAGE;
+            size_t endIdx = std::min(total, startIdx + PAGE);
+            int y = dataY;
             for (size_t i = startIdx; i < endIdx; ++i) {
                 const DocGia* dg = rows[i];
                 tui::gotoxy(4, y++); std::cout
@@ -875,17 +932,13 @@ namespace menutui {
                     << _pad(dg->phai, CW_GIOITINH) << " | "
                     << _pad((dg->trangThaiThe == 1 ? "Hoat dong" : "Khoa"), CW_TRANGTHAI);
             }
-            tui::print_footer_hints(4, footerY, "[Up/Down] Trang truoc/sau   -   [Esc] Quay lai");
-            };
-
+        };        
+        paint_page(page);              
         while (true) {
-            render(page);
-            while (true) {
-                tui::KeyEvent ev = tui::readKey();
-                if (ev.key == tui::K_ESC) { return; }
-                if (ev.key == tui::K_UP) { if (page > 0) { --page; break; } }
-                if (ev.key == tui::K_DOWN) { if (page + 1 < pages) { ++page; break; } }
-            }
+            tui::KeyEvent ev = tui::readKey();
+            if (ev.key == tui::K_ESC) { return; }
+            if (ev.key == tui::K_UP) { if (page > 0) { --page; paint_page(page); } }
+            if (ev.key == tui::K_DOWN) { if (page + 1 < pages) { ++page; paint_page(page); } }
         }
     }
     inline void ui_dg_in_theo_ten_ho(DocGiaNode* root) {
@@ -935,7 +988,6 @@ namespace menutui {
             return std::string(W - (int)s.size(), ' ') + s;
             };
         auto DASH = [](int n) -> std::string { return std::string(n, '-'); };
-
         std::vector<const DauSach*> a;
         for (auto* ds : dsArr) {
             if (ds != nullptr && ds->soLuotMuon > 0) {
@@ -1173,6 +1225,4 @@ namespace menutui {
             }
         }
     }
-
 }
-
