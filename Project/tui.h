@@ -14,7 +14,6 @@
 #endif
 
 namespace tui {
-
     // ===================== Color constants =====================
     enum : int {
         FG_OK = 10,
@@ -34,8 +33,8 @@ namespace tui {
     };
 
     struct KeyEvent {
-        int key; 
-        int ch;  
+        int key;
+        int ch;
         KeyEvent() : key(K_NONE), ch(0) {}
     };
 
@@ -43,7 +42,7 @@ namespace tui {
 #ifdef _WIN32
     inline void gotoxy(int x, int y) {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-        COORD c;        
+        COORD c;
         c.X = (SHORT)((x > 0) ? (x - 1) : 0);
         c.Y = (SHORT)((y > 0) ? (y - 1) : 0);
         SetConsoleCursorPosition(h, c);
@@ -56,7 +55,7 @@ namespace tui {
         DWORD cellCount;
         COORD home = { 0, 0 };
 
-        if (!GetConsoleScreenBufferInfo(h, &csbi)) {            
+        if (!GetConsoleScreenBufferInfo(h, &csbi)) {
             std::system("cls");
             return;
         }
@@ -96,11 +95,11 @@ namespace tui {
             }
         }
 
-        WORD attr = defaultAttr;        
+        WORD attr = defaultAttr;
         switch (colorCode) {
         case FG_OK:    attr = FOREGROUND_GREEN | FOREGROUND_INTENSITY; break;
         case FG_ALERT: attr = FOREGROUND_RED | FOREGROUND_INTENSITY; break;
-        case FG_HL:    attr = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY; break; 
+        case FG_HL:    attr = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY; break;
         default:       attr = defaultAttr; break;
         }
         SetConsoleTextAttribute(h, attr);
@@ -117,7 +116,7 @@ namespace tui {
     inline KeyEvent readKey() {
         KeyEvent e;
         int c = _getch();
-        if (c == 0 || c == 224) {            
+        if (c == 0 || c == 224) {
             int c2 = _getch();
             switch (c2) {
             case 72: e.key = K_UP; break;    // Up
@@ -134,8 +133,7 @@ namespace tui {
         else if (c == 27) {
             e.key = K_ESC; e.ch = c;
         }
-        else {
-            // fallback: cho phép W/S/A/D
+        else {            
             switch (c) {
             case 'w': case 'W': e.key = K_UP;    break;
             case 's': case 'S': e.key = K_DOWN;  break;
@@ -173,7 +171,7 @@ namespace tui {
     }
 
     inline void setColor(int colorCode) {
-        int ansi = 37; 
+        int ansi = 37;
         switch (colorCode) {
         case FG_OK:    ansi = 32; break; // green
         case FG_ALERT: ansi = 31; break; // red
@@ -192,8 +190,7 @@ namespace tui {
     inline KeyEvent readKey() {
         KeyEvent e;
         int c = std::getchar();
-        if (c == 27) {
-            // Thử bắt chuỗi ESC [ A/B/C/D
+        if (c == 27) {            
             int c1 = std::getchar();
             if (c1 == '[') {
                 int c2 = std::getchar();
@@ -245,25 +242,17 @@ namespace tui {
     }
 
     inline void drawBox(int x, int y, int w, int h, const std::string& title) {
-       
         tui::setColor(tui::FG_HL);
-
         if (w < 4) { w = 4; }
-        if (h < 3) { h = 3; }
-
-        // Corners
+        if (h < 3) { h = 3; }        
         gotoxy(x, y);             std::cout << "+";
         gotoxy(x + w - 1, y);     std::cout << "+";
         gotoxy(x, y + h - 1);     std::cout << "+";
-        gotoxy(x + w - 1, y + h - 1); std::cout << "+";
-
-        // Edges
+        gotoxy(x + w - 1, y + h - 1); std::cout << "+";       
         drawHLine(x + 1, y, w - 2);
         drawHLine(x + 1, y + h - 1, w - 2);
         drawVLine(x, y + 1, h - 2);
-        drawVLine(x + w - 1, y + 1, h - 2);
-
-        // Title
+        drawVLine(x + w - 1, y + 1, h - 2);     
         if (!title.empty() && w > 4) {
             std::string t = title;
             if ((int)t.size() > w - 4) {
@@ -286,19 +275,53 @@ namespace tui {
         gotoxy(x, y);
         setColor(FG_HL);
         std::cout << "[Esc] Quay lai";
-        resetColor();
-        // Wait for ESC only
+        resetColor();        
         while (true) {
             KeyEvent e = readKey();
             if (e.key == K_ESC) { break; }
         }
-    } 
-
-    // Xóa một vùng chữ (không đụng viền)
+    }
+   
     inline void clear_rect(int x, int y, int w, int h) {
         for (int r = 0; r < h; ++r) {
             gotoxy(x, y + r);
             std::cout << std::string(w, ' ');
+        }
+    }
+    
+    inline int _read_line_allow_esc_if_empty(int x, int y, int maxlen, std::string& out) {
+        out.clear();
+        tui::gotoxy(x, y);
+        tui::showCursor();
+        while (true) {
+            tui::KeyEvent ev = tui::readKey();            
+            if (ev.key == tui::K_ESC && out.empty()) {
+                tui::hideCursor();
+                return -1;
+            }           
+            if (ev.key == tui::K_ENTER) {
+                tui::hideCursor();
+                return 1;
+            }            
+            if (ev.ch == 8 || ev.ch == 127) {
+                if (!out.empty()) {
+                    out.pop_back();
+                    int cx = x + (int)out.size();
+                    tui::gotoxy(cx, y); std::cout << ' ';
+                    tui::gotoxy(cx, y);
+                }
+                continue;
+            }            
+            char ch = 0;
+            if (ev.ch != 0 && ev.key != tui::K_ESC && ev.key != tui::K_ENTER) {
+                ch = (char)ev.ch;
+            }
+            if (ch >= 32 && ch <= 126) {
+                if ((int)out.size() < maxlen) {
+                    out.push_back(ch);
+                    std::cout << ch;
+                }
+            }
         }
     }
 }
