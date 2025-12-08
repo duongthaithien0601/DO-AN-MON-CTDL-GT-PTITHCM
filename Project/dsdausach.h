@@ -5,7 +5,6 @@
 #include <string>
 #include <algorithm>
 
-// Bo sung: dinh nghia is_isbn_exists(...) de phuc vu gen_isbn_unique() trong cautruc.h
 inline bool is_isbn_exists(const std::vector<DauSach*>& arr, const std::string& isbn) {
     for (size_t i = 0; i < arr.size(); ++i) {
         if (arr[i] != NULL && arr[i]->ISBN == isbn) {
@@ -66,7 +65,7 @@ inline std::string lay_vi_tri_chung(const DauSach* ds) {
     const std::string first = ds->dmsHead->viTri;
     for (const DanhMucSachNode* p = ds->dmsHead; p != NULL; p = p->next) {
         if (p->viTri != first) {
-            return ""; // khong dong nhat -> de UI tu xu ly
+            return ""; 
         }
     }
     return first;

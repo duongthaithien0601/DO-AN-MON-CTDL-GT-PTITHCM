@@ -1,5 +1,4 @@
 ﻿#pragma once
-
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -10,7 +9,6 @@
 #include "dsdms.h"
 #include "dsdausach.h"
 #include "dsdocgia.h"
-
 #ifdef _WIN32
 #include <direct.h>  // _mkdir
 #else
@@ -19,13 +17,11 @@
 #endif
 
 // ========================= ĐƯỜNG DẪN LƯU TRỮ =========================
-
 inline std::string path_data_dir() { return std::string("data"); }
 inline std::string path_file_dausach() { return path_data_dir() + "/dausach.txt"; }
 inline std::string path_file_dms() { return path_data_dir() + "/dms.txt"; }
 inline std::string path_file_docgia() { return path_data_dir() + "/docgia.txt"; }
 inline std::string path_file_muontra() { return path_data_dir() + "/muontra.txt"; }
-
 inline bool ensure_data_dir() {
 #ifdef _WIN32
     int r = _mkdir(path_data_dir().c_str()); (void)r;
@@ -35,9 +31,7 @@ inline bool ensure_data_dir() {
     return true;
 }
 
-
 // ========================= TIỆN ÍCH CHUỖI I/O CƠ BẢN =========================
-
 inline std::vector<std::string> split_bar(const std::string& line) {
     std::vector<std::string> out; std::string cur;
     for (size_t i = 0; i < line.size(); i++) {
@@ -48,7 +42,6 @@ inline std::vector<std::string> split_bar(const std::string& line) {
     out.push_back(cur);
     return out;
 }
-
 inline std::string join_bar(const std::vector<std::string>& v) {
     std::ostringstream oss;
     for (size_t i = 0; i < v.size(); i++) {
@@ -57,12 +50,10 @@ inline std::string join_bar(const std::vector<std::string>& v) {
     }
     return oss.str();
 }
-
 template <typename T>
 inline std::string to_str(T v) { std::ostringstream oss; oss << v; return oss.str(); }
 
 // ========================= DATE <-> STRING =========================
-
 inline std::string date_to_string(const Date& d) {
     if (!is_valid_date(d)) { return std::string("0/0/0"); }
     std::ostringstream oss;
@@ -70,8 +61,6 @@ inline std::string date_to_string(const Date& d) {
     if (d.m < 10) { oss << '0'; } oss << d.m << '/';
     oss << d.y; return oss.str();
 }
-
-// Hỗ trợ cả "dd/mm/yyyy" và "yyyy-mm-dd" để đọc ngược dữ liệu cũ
 inline bool parse_date_token(const std::string& s, Date& out) {
     if (s.empty()) { out = Date{ 0,0,0 }; return true; }
     int a = 0, b = 0, c = 0; char sep1 = 0, sep2 = 0;
@@ -90,9 +79,7 @@ inline bool parse_date_token(const std::string& s, Date& out) {
 }
 
 // ========================= GIẢI PHÓNG BỘ NHỚ =========================
-
 inline void giai_phong_dms(DanhMucSachNode*& head) { dms_free_all(head); }
-
 inline void giai_phong_vector_dausach(std::vector<DauSach*>& dsArr) {
     for (size_t i = 0; i < dsArr.size(); i++) {
         DauSach* ds = dsArr[i];
@@ -103,13 +90,11 @@ inline void giai_phong_vector_dausach(std::vector<DauSach*>& dsArr) {
     }
     dsArr.clear();
 }
-
 inline void giai_phong_ds_muontra(MuonTraNode*& head) {
     MuonTraNode* p = head;
     while (p != NULL) { MuonTraNode* del = p; p = p->next; delete del; }
     head = NULL;
 }
-
 inline void giai_phong_cay_doc_gia(DocGiaNode*& root) {
     if (root == NULL) { return; }
     giai_phong_cay_doc_gia(root->left);
@@ -117,9 +102,7 @@ inline void giai_phong_cay_doc_gia(DocGiaNode*& root) {
     giai_phong_ds_muontra(root->info.mtHead);
     delete root; root = NULL;
 }
-
 // ========================= LƯU / ĐỌC: ĐẦU SÁCH =========================
-
 inline bool save_dau_sach(const std::vector<DauSach*>& dsArr) {
     ensure_data_dir();
     std::ofstream fo(path_file_dausach().c_str());
@@ -139,7 +122,6 @@ inline bool save_dau_sach(const std::vector<DauSach*>& dsArr) {
     }
     return true;
 }
-
 inline bool load_dau_sach(std::vector<DauSach*>& dsArr) {
     dsArr.clear();
     std::ifstream fi(path_file_dausach().c_str());
@@ -162,9 +144,7 @@ inline bool load_dau_sach(std::vector<DauSach*>& dsArr) {
     }
     return true;
 }
-
 // ========================= LƯU / ĐỌC: DANH MỤC SÁCH =========================
-
 inline bool save_dms(const std::vector<DauSach*>& dsArr) {
     ensure_data_dir();
     std::ofstream fo(path_file_dms().c_str());
@@ -184,7 +164,6 @@ inline bool save_dms(const std::vector<DauSach*>& dsArr) {
     }
     return true;
 }
-
 inline bool load_dms(std::vector<DauSach*>& dsArr) {
     std::ifstream fi(path_file_dms().c_str());
     if (!fi) { return true; }
@@ -214,7 +193,6 @@ inline bool load_dms(std::vector<DauSach*>& dsArr) {
 }
 
 // ========================= LƯU / ĐỌC: ĐỘC GIẢ (BST) =========================
-
 inline void _save_doc_gia_inorder(std::ofstream& fo, DocGiaNode* root) {
     if (root == NULL) { return; }
     _save_doc_gia_inorder(fo, root->left);
@@ -230,7 +208,6 @@ inline void _save_doc_gia_inorder(std::ofstream& fo, DocGiaNode* root) {
     }
     _save_doc_gia_inorder(fo, root->right);
 }
-
 inline bool save_doc_gia(DocGiaNode* root) {
     ensure_data_dir();
     std::ofstream fo(path_file_docgia().c_str());
@@ -238,7 +215,6 @@ inline bool save_doc_gia(DocGiaNode* root) {
     _save_doc_gia_inorder(fo, root);
     return true;
 }
-
 inline bool load_doc_gia(DocGiaNode*& root) {
     root = NULL;
     std::ifstream fi(path_file_docgia().c_str());
@@ -251,15 +227,12 @@ inline bool load_doc_gia(DocGiaNode*& root) {
         dg.maThe = std::atoi(cols[0].c_str());
         dg.ho = cols[1];
         dg.ten = cols[2];
-
         std::string phaiTok = trim(cols[3]);
         if (phaiTok == "0") { dg.phai = "Nam"; }
         else if (phaiTok == "1") { dg.phai = "Nu"; }
         else { dg.phai = phaiTok; }
-
         int raw = std::atoi(cols[4].c_str());
         dg.trangThaiThe = (raw != 0 ? 1 : 0);
-
         dg.mtHead = NULL;
         insert_doc_gia(root, dg);
     }
@@ -267,7 +240,6 @@ inline bool load_doc_gia(DocGiaNode*& root) {
 }
 
 // ========================= LƯU / ĐỌC: MƯỢN - TRẢ =========================
-
 inline void _duyet_save_muon_tra(std::ofstream& fo, DocGiaNode* root) {
     if (root == NULL) { return; }
     _duyet_save_muon_tra(fo, root->left);
@@ -287,7 +259,6 @@ inline void _duyet_save_muon_tra(std::ofstream& fo, DocGiaNode* root) {
     }
     _duyet_save_muon_tra(fo, root->right);
 }
-
 inline bool save_muon_tra(DocGiaNode* root) {
     ensure_data_dir();
     std::ofstream fo(path_file_muontra().c_str());
@@ -295,7 +266,6 @@ inline bool save_muon_tra(DocGiaNode* root) {
     _duyet_save_muon_tra(fo, root);
     return true;
 }
-
 inline bool load_muon_tra(std::vector<DauSach*>& dsArr, DocGiaNode*& root) {
     std::ifstream fi(path_file_muontra().c_str());
     if (!fi) { return true; }
@@ -309,19 +279,15 @@ inline bool load_muon_tra(std::vector<DauSach*>& dsArr, DocGiaNode*& root) {
         parse_date_token(cols[2], ngayMuon);
         parse_date_token(cols[3], ngayTra);
         int tt = std::atoi(cols[4].c_str());
-
         DocGiaNode* dgNode = tim_node_doc_gia(root, maThe);
         if (dgNode == NULL) { continue; }
-
         MuonTraNode* node = new MuonTraNode();
         node->maSach = maSach;
         node->ngayMuon = ngayMuon;
         node->ngayTra = ngayTra;
         node->trangThai = static_cast<TrangThaiMuonTra>(tt);
         node->next = dgNode->info.mtHead;
-        dgNode->info.mtHead = node;
-
-        // ======== SỮA: Đồng bộ trạng thái bản sao theo lịch sử mượn (không còn THANH LÝ) ========
+        dgNode->info.mtHead = node;        
         DauSach* ds = tim_dau_sach_theo_isbn(dsArr, masach_to_isbn(maSach));
         if (ds != NULL) {
             DanhMucSachNode* copy = dms_find_by_masach(ds, maSach);
@@ -330,7 +296,7 @@ inline bool load_muon_tra(std::vector<DauSach*>& dsArr, DocGiaNode*& root) {
                     copy->trangThai = BANSAO_DA_MUON;   // đang mượn
                 }
                 else {
-                    copy->trangThai = BANSAO_CHO_MUON;  // đã trả (hoặc đã xử lý)
+                    copy->trangThai = BANSAO_CHO_MUON;  // đã trả 
                 }
             }
         }
@@ -339,7 +305,6 @@ inline bool load_muon_tra(std::vector<DauSach*>& dsArr, DocGiaNode*& root) {
 }
 
 // ========================= GÓI LƯU/ĐỌC TẤT CẢ =========================
-
 inline bool save_all_data(const std::vector<DauSach*>& dsArr, DocGiaNode* root) {
     bool ok1 = save_dau_sach(dsArr);
     bool ok2 = save_dms(dsArr);
@@ -347,18 +312,15 @@ inline bool save_all_data(const std::vector<DauSach*>& dsArr, DocGiaNode* root) 
     bool ok4 = save_muon_tra(root);
     return ok1 && ok2 && ok3 && ok4;
 }
-
 inline bool load_all_data(std::vector<DauSach*>& dsArr, DocGiaNode*& root) {
     giai_phong_vector_dausach(dsArr);
     giai_phong_cay_doc_gia(root);
     bool ok1 = load_dau_sach(dsArr);
     bool ok2 = load_dms(dsArr);
-
     // Dong bo soLuongBanSao theo DSLK DMS vua nap (an toan du lieu)
     for (size_t i = 0; i < dsArr.size(); ++i) {
         dms_recount_update(dsArr[i]);
     }
-
     bool ok3 = load_doc_gia(root);
     bool ok4 = load_muon_tra(dsArr, root);
     return ok1 && ok2 && ok3 && ok4;

@@ -1,5 +1,4 @@
 ﻿#pragma once
-
 #include <string>
 #include <vector>
 #include "cautruc.h"
@@ -16,7 +15,6 @@ inline int dms_count_total(const DauSach* ds) {
     }
     return dem;
 }
-
 // Đếm số bản sao đang được mượn.
 inline int dms_count_borrowed(const DauSach* ds) {
     if (ds == NULL) {
@@ -30,7 +28,6 @@ inline int dms_count_borrowed(const DauSach* ds) {
     }
     return dem;
 }
-
 // Tìm bản sao rảnh (trangThai == BANSAO_CHO_MUON) đầu tiên.
 inline DanhMucSachNode* dms_find_first_available(DauSach* ds) {
     if (ds == NULL) {
@@ -43,7 +40,6 @@ inline DanhMucSachNode* dms_find_first_available(DauSach* ds) {
     }
     return NULL;
 }
-
 // Tìm bản sao theo mã sách.
 inline DanhMucSachNode* dms_find_by_masach(DauSach* ds, const std::string& maSach) {
     if (ds == NULL) {
@@ -76,8 +72,7 @@ inline void dms_append_tail(DauSach* ds, DanhMucSachNode* node) {
     }
     ds->soLuongBanSao++;
 }
-
-// Gỡ một node (không giải phóng bộ nhớ), tự giảm soLuongBanSao.
+// Gỡ một node, tự giảm soLuongBanSao.
 inline bool dms_detach_node(DauSach* ds, DanhMucSachNode* target) {
     if (ds == NULL || target == NULL) {
         return false;
@@ -100,8 +95,7 @@ inline bool dms_detach_node(DauSach* ds, DanhMucSachNode* target) {
     }
     return false;
 }
-
-// Giải phóng toàn bộ DSLK (không đụng đến ds->soLuongBanSao vì không có con trỏ ds).
+// Giải phóng toàn bộ DSLK. 
 inline void dms_free_all(DanhMucSachNode*& head) {
     DanhMucSachNode* p = head;
     while (p != NULL) {
@@ -111,7 +105,6 @@ inline void dms_free_all(DanhMucSachNode*& head) {
     }
     head = NULL;
 }
-
 // Lấy danh sách mã sách (phục vụ lưu trữ/in bảng).
 inline std::vector<std::string> dms_list_masach(const DauSach* ds) {
     std::vector<std::string> kq;
@@ -123,12 +116,10 @@ inline std::vector<std::string> dms_list_masach(const DauSach* ds) {
     }
     return kq;
 }
-
 // Nếu toàn bộ bản sao có cùng vị trí, trả về vị trí đó; ngược lại trả chuỗi rỗng.
 // Đặt vị trí cho tất cả bản sao.
 
 // =================== ĐÁNH DẤU TRẠNG THÁI ===================
-
 inline bool dms_mark_borrowed(DanhMucSachNode* node) {
     if (node == NULL) {
         return false;
@@ -139,7 +130,6 @@ inline bool dms_mark_borrowed(DanhMucSachNode* node) {
     node->trangThai = BANSAO_DA_MUON;
     return true;
 }
-
 inline bool dms_mark_returned(DanhMucSachNode* node) {
     if (node == NULL) {
         return false;
@@ -159,6 +149,3 @@ inline void dms_recount_update(DauSach* ds) {
     }
     ds->soLuongBanSao = dms_count_total(ds);
 }
-
-
-

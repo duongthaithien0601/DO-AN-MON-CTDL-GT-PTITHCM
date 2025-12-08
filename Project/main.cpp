@@ -14,22 +14,18 @@ int main() {
     std::cin.tie(nullptr);
     std::vector<DauSach*> dsArr;
     DocGiaNode* root = NULL;
-
     if (!load_all_data(dsArr, root)) {
         std::cout << "Tai du lieu that bai. Chuong trinh se khoi dong voi CSDL rong.\n";
         dsArr.clear();
         root = NULL;
     }    
-
-    menutui::menu_main_tui(dsArr, root);   
-   
+    menutui::menu_main_tui(dsArr, root);      
     if (save_all_data(dsArr, root)) {
         std::cout << "Da luu du lieu. Tam biet!\n";
     }
     else {
         std::cout << "Luu du lieu that bai!\n";
     }
-
     giai_phong_vector_dausach(dsArr);
     giai_phong_cay_doc_gia(root);
     return 0;

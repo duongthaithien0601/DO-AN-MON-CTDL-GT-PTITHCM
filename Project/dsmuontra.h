@@ -1,5 +1,4 @@
 ﻿#pragma once
-
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -16,7 +15,6 @@ inline std::string ten_sach_theo_isbn(const std::vector<DauSach*>& dsArr, const 
     }
     return p->tenSach;
 }
-
 // Tao & gan mot phieu muon moi vao danh sach cua doc gia (dau danh sach)
 inline void them_phieu_muon_cho_doc_gia(DocGia& dg, const std::string& maSach, const Date& ngayMuon) {
     MuonTraNode* node = new MuonTraNode();
@@ -26,8 +24,7 @@ inline void them_phieu_muon_cho_doc_gia(DocGia& dg, const std::string& maSach, c
     node->next = dg.mtHead;
     dg.mtHead = node;
 }
-
-// Liet ke cac ban ghi DANG MUON (trangThai == MT_DANG_MUON) cua 1 doc gia
+// Liet ke cac ban ghi DANG MUON cua 1 doc gia
 inline std::vector<MuonTraNode*> list_dang_muon(DocGia& dg) {
     std::vector<MuonTraNode*> v;
     for (MuonTraNode* p = dg.mtHead; p != NULL; p = p->next) {
@@ -37,10 +34,7 @@ inline std::vector<MuonTraNode*> list_dang_muon(DocGia& dg) {
     }
     return v;
 }
-
 // =================== QUÁ HẠN ===================
-// Kiem tra doc gia co dang co sach QUA HAN (tinh den ngay `today`) hay khong.
-// Tra ve true neu co it nhat 1 phieu muon co tre > 0. Ghi so ngay tre lon nhat vao outTreMax (neu co).
 inline bool doc_gia_co_qua_han_den_ngay(const DocGia& dg, const Date& today, int* outTreMax = NULL) {
     int treMax = 0;
     bool coQuaHan = false;
@@ -87,7 +81,6 @@ inline bool muon_sach(DocGia& dg,
         }
         return false;
     }
-
     DanhMucSachNode* banSao = dms_find_first_available(&ds);
     if (banSao == NULL) {
         if (outError != NULL) {
@@ -108,7 +101,6 @@ inline bool muon_sach(DocGia& dg,
     }
     return true;
 }
-
 inline bool tra_sach(DocGia& dg,
     std::vector<DauSach*>& dsArr,
     MuonTraNode* target,
@@ -128,11 +120,9 @@ inline bool tra_sach(DocGia& dg,
         }
         return false;
     }
-
     // Cap nhat ban ghi muon
     target->trangThai = MT_DA_TRA;
     target->ngayTra = ngayTra;
-
     // Danh dau ban sao da tra (neu tra cuu duoc)
     const std::string isbn = masach_to_isbn(target->maSach);
     DauSach* ds = tim_dau_sach_theo_isbn(dsArr, isbn);
@@ -142,7 +132,6 @@ inline bool tra_sach(DocGia& dg,
             dms_mark_returned(bs);
         }
     }
-
     // Tinh so ngay muon & tre han
     const int soNgay = diff_days(ngayTra, target->ngayMuon);
     const int tre = std::max(0, soNgay - HAN_MUON_NGAY);

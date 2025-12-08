@@ -1,5 +1,4 @@
 #pragma once
-
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -17,7 +16,6 @@ inline DocGiaNode* _find_min(DocGiaNode* root) {
     }
     return root;
 }
-
 inline void _delete_node(DocGiaNode*& root, int maThe) {
     if (root == NULL) {
         return;
@@ -63,7 +61,6 @@ inline DocGiaNode* tim_node_doc_gia(DocGiaNode* root, int maThe) {
     }
     return NULL;
 }
-
 // Chen DocGia theo khoa maThe (neu da ton tai -> khong chen de tranh mat du lieu)
 inline void insert_doc_gia(DocGiaNode*& root, const DocGia& v) {
     if (root == NULL) {
@@ -81,7 +78,7 @@ inline void insert_doc_gia(DocGiaNode*& root, const DocGia& v) {
             p = p->right;
         }
         else {
-            // Trung maThe -> bo qua (khong cap nhat de tranh mat lich su mtHead)
+            // Trung maThe -> bo qua (khong cap nhat de tranh mat du lieu)
             return;
         }
     }
@@ -92,7 +89,6 @@ inline void insert_doc_gia(DocGiaNode*& root, const DocGia& v) {
         parent->right = new DocGiaNode(v);
     }
 }
-
 // Dem so ban ghi muon co trang thai DANG MUON cua 1 doc gia
 inline int dem_mt_dang_muon(const DocGia& dg) {
     int cnt = 0;
@@ -103,8 +99,7 @@ inline int dem_mt_dang_muon(const DocGia& dg) {
     }
     return cnt;
 }
-
-// Xoa doc gia chi khi khong con muon sach (MT_DANG_MUON)
+// Xoa doc gia chi khi khong con muon sach 
 inline bool xoa_doc_gia_if_no_borrowing(DocGiaNode*& root, int maThe) {
     DocGiaNode* p = tim_node_doc_gia(root, maThe);
     if (p == NULL) {
@@ -126,12 +121,10 @@ inline void duyet_LNR_luu_mang(DocGiaNode* root, std::vector<DocGia*>& out) {
     out.push_back(&root->info);
     duyet_LNR_luu_mang(root->right, out);
 }
-
 // Kiem tra maThe da ton tai tren cay
 inline bool _exists_ma_the(DocGiaNode* root, int maThe) {
     return tim_node_doc_gia(root, maThe) != NULL;
 }
-
 // Sinh maThe 6 chu so khong trung (uu tien random, fallback quet tuan tu)
 inline int gen_ma_the_unique(DocGiaNode* root) {
     // Pham vi: 100000..999999 (6 chu so)
@@ -153,8 +146,7 @@ inline int gen_ma_the_unique(DocGiaNode* root) {
     // Khong xay ra trong thuc te
     return 999999;
 }
-
-//Dem tong so node tren cay — chua duoc TUI goi, de phong sau nay can
+//Dem tong so node tren cay 
 inline int dem_tong_doc_gia(DocGiaNode* root) {
     if (root == NULL) {
         return 0;

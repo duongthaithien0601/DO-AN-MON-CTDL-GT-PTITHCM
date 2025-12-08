@@ -1,5 +1,4 @@
 ﻿#pragma once
-
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -9,25 +8,20 @@
 #include <random>
 
 // ======================= CẤU TRÚC DỮ LIỆU CHÍNH =======================
-// Thời hạn mượn tối đa (ngày) mà TUI đang dùng.
 enum { HAN_MUON_NGAY = 7 };
-
 enum TrangThaiBanSao {
     BANSAO_CHO_MUON = 0,
     BANSAO_DA_MUON = 1
 };
-
 enum TrangThaiMuonTra {
     MT_DANG_MUON = 0,
     MT_DA_TRA = 1,
 };
-
 struct Date {
-    int d; // 1..31 hoặc 0 nếu rỗng
-    int m; // 1..12 hoặc 0 nếu rỗng
-    int y; // >=1  hoặc 0 nếu rỗng
+    int d; 
+    int m; 
+    int y; 
 };
-
 struct DanhMucSachNode {
     std::string maSach;        // "ISBN-<idx>"
     TrangThaiBanSao trangThai; // cho muon / da muon 
@@ -36,7 +30,6 @@ struct DanhMucSachNode {
     DanhMucSachNode() : trangThai(BANSAO_CHO_MUON), next(NULL) {
     }
 };
-
 struct DauSach {
     std::string ISBN;             // 9 chữ số
     std::string tenSach;
@@ -52,7 +45,6 @@ struct DauSach {
         soLuotMuon(0), dmsHead(NULL) {
     }
 };
-
 struct MuonTraNode {
     std::string maSach;
     Date ngayMuon;
@@ -62,7 +54,6 @@ struct MuonTraNode {
     MuonTraNode() : trangThai(MT_DANG_MUON), next(NULL) {
     }
 };
-
 struct DocGia {
     int maThe;            // 6 chữ số
     std::string ho;
@@ -73,7 +64,6 @@ struct DocGia {
     DocGia() : maThe(0), phai("Nam"), trangThaiThe(1), mtHead(NULL) {
     }
 };
-
 struct DocGiaNode {
     DocGia info;
     DocGiaNode* left;
@@ -81,7 +71,6 @@ struct DocGiaNode {
     explicit DocGiaNode(const DocGia& v) : info(v), left(NULL), right(NULL) {
     }
 };
-
 struct TKQuaHanRow {
     int maThe = 0;
     std::string hoTen;
@@ -144,7 +133,6 @@ inline bool is_valid_date(const Date& a) {
     }
     return (a.d >= 1 && a.d <= maxd);
 }
-// dd/mm/yyyy → Date (trả về qua out). True nếu hợp lệ.
 inline bool parse_date_ddmmyyyy(const std::string& s, Date& out) {
     std::string t = trim(s);
     int d = 0, m = 0, y = 0;
@@ -158,19 +146,17 @@ inline bool parse_date_ddmmyyyy(const std::string& s, Date& out) {
     out.d = d; out.m = m; out.y = y;
     return is_valid_date(out);
 }
-// OVERLOAD khớp với TUI: dd/mm/yyyy -> Date (invalid => {0,0,0})
 inline Date parse_date_ddmmyyyy(const std::string& s) {
     Date d{ 0,0,0 };
     (void)parse_date_ddmmyyyy(s, d);
     return d;
 }
-// Khoảng ngày: b - a (âm nếu b < a)
 inline std::tm _to_tm(const Date& a) {
     std::tm tmv;
     tmv.tm_sec = 0; tmv.tm_min = 0; tmv.tm_hour = 0;
     tmv.tm_mday = (a.d <= 0 ? 1 : a.d);
     tmv.tm_mon = (a.m <= 0 ? 0 : (a.m - 1));
-    tmv.tm_year = (a.y <= 0 ? 70 : (a.y - 1900)); // fallback 1970
+    tmv.tm_year = (a.y <= 0 ? 70 : (a.y - 1900)); 
     tmv.tm_isdst = -1;
     return tmv;
 }
@@ -182,7 +168,6 @@ inline int days_between(const Date& a, const Date& b) {
     long diff = static_cast<long>(std::difftime(eb, ea) / (24L * 3600L));
     return static_cast<int>(diff);
 }
-// Tên hàm đúng như TUI đang gọi
 inline int diff_days(const Date& b, const Date& a) {
     return days_between(a, b);
 }

@@ -1,10 +1,8 @@
 ﻿#pragma once
-
 #include <string>
 #include <iostream>
 #include <cstdio>
-#include <cstdlib>   
-
+#include <cstdlib>  
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -20,7 +18,6 @@ namespace tui {
         FG_ALERT = 12,
         FG_HL = 14
     };
-
     // ===================== Key codes =====================
     enum : int {
         K_NONE = 0,
@@ -31,13 +28,11 @@ namespace tui {
         K_ENTER = 5,
         K_ESC = 6
     };
-
     struct KeyEvent {
         int key;
         int ch;
         KeyEvent() : key(K_NONE), ch(0) {}
     };
-
     // ===================== Cursor & Clear =====================
 #ifdef _WIN32
     inline void gotoxy(int x, int y) {
@@ -47,7 +42,6 @@ namespace tui {
         c.Y = (SHORT)((y > 0) ? (y - 1) : 0);
         SetConsoleCursorPosition(h, c);
     }
-
     inline void clearScreen() {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -64,7 +58,6 @@ namespace tui {
         FillConsoleOutputAttribute(h, csbi.wAttributes, cellCount, home, &count);
         SetConsoleCursorPosition(h, home);
     }
-
     inline void showCursor() {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_CURSOR_INFO info;
@@ -73,7 +66,6 @@ namespace tui {
             SetConsoleCursorInfo(h, &info);
         }
     }
-
     inline void hideCursor() {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_CURSOR_INFO info;
@@ -82,7 +74,6 @@ namespace tui {
             SetConsoleCursorInfo(h, &info);
         }
     }
-
     inline void setColor(int colorCode) {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         static WORD defaultAttr = 0;
@@ -94,7 +85,6 @@ namespace tui {
                 cached = true;
             }
         }
-
         WORD attr = defaultAttr;
         switch (colorCode) {
         case FG_OK:    attr = FOREGROUND_GREEN | FOREGROUND_INTENSITY; break;
@@ -104,7 +94,6 @@ namespace tui {
         }
         SetConsoleTextAttribute(h, attr);
     }
-
     inline void resetColor() {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -112,7 +101,6 @@ namespace tui {
             SetConsoleTextAttribute(h, csbi.wAttributes);
         }
     }
-
     inline KeyEvent readKey() {
         KeyEvent e;
         int c = _getch();
@@ -145,31 +133,25 @@ namespace tui {
         }
         return e;
     }
-
-#else   
-
+#else
     inline void gotoxy(int x, int y) {
         if (x < 1) { x = 1; }
         if (y < 1) { y = 1; }
         std::printf("\x1b[%d;%dH", y, x);
         std::fflush(stdout);
     }
-
     inline void clearScreen() {
         std::printf("\x1b[2J\x1b[H");
         std::fflush(stdout);
     }
-
     inline void showCursor() {
         std::printf("\x1b[?25h");
         std::fflush(stdout);
     }
-
     inline void hideCursor() {
         std::printf("\x1b[?25l");
         std::fflush(stdout);
     }
-
     inline void setColor(int colorCode) {
         int ansi = 37;
         switch (colorCode) {
@@ -181,12 +163,10 @@ namespace tui {
         std::printf("\x1b[%dm", ansi);
         std::fflush(stdout);
     }
-
     inline void resetColor() {
         std::printf("\x1b[0m");
         std::fflush(stdout);
     }
-
     inline KeyEvent readKey() {
         KeyEvent e;
         int c = std::getchar();
@@ -225,7 +205,6 @@ namespace tui {
 #endif
 
     // ===================== Drawing helpers =====================
-
     inline void drawHLine(int x, int y, int w) {
         if (w <= 0) { return; }
         gotoxy(x, y);
@@ -233,14 +212,12 @@ namespace tui {
             std::cout << "-";
         }
     }
-
     inline void drawVLine(int x, int y, int h) {
         for (int i = 0; i < h; ++i) {
             gotoxy(x, y + i);
             std::cout << "|";
         }
     }
-
     inline void drawBox(int x, int y, int w, int h, const std::string& title) {
         tui::setColor(tui::FG_HL);
         if (w < 4) { w = 4; }
@@ -262,14 +239,12 @@ namespace tui {
             std::cout << " " << t << " ";
         }
     }
-
     inline void print_footer_hints(int x, int y, const std::string& text) {
         gotoxy(x, y);
         setColor(FG_HL);
         std::cout << text;
         resetColor();
     }
-
     // ===================== UX helpers =====================
     inline void press_any_key_to_back(int x, int y) {
         gotoxy(x, y);
@@ -280,15 +255,13 @@ namespace tui {
             KeyEvent e = readKey();
             if (e.key == K_ESC) { break; }
         }
-    }
-   
+    }   
     inline void clear_rect(int x, int y, int w, int h) {
         for (int r = 0; r < h; ++r) {
             gotoxy(x, y + r);
             std::cout << std::string(w, ' ');
         }
-    }
-    
+    }    
     inline int _read_line_allow_esc_if_empty(int x, int y, int maxlen, std::string& out) {
         out.clear();
         tui::gotoxy(x, y);
