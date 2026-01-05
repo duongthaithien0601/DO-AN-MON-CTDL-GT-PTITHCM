@@ -12,7 +12,7 @@
 #endif
 
 namespace tui {
-    // ===================== Color constants =====================
+	// ===================== Color codes =====================
     enum : int {
         FG_OK = 10,
         FG_ALERT = 12,
@@ -28,6 +28,7 @@ namespace tui {
         K_ENTER = 5,
         K_ESC = 6
     };
+	// ===================== Key event =====================
     struct KeyEvent {
         int key;
         int ch;
@@ -42,13 +43,13 @@ namespace tui {
         c.Y = (SHORT)((y > 0) ? (y - 1) : 0);
         SetConsoleCursorPosition(h, c);
     }
+	// ===================== Clear Screen =====================
     inline void clearScreen() {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         DWORD count;
         DWORD cellCount;
         COORD home = { 0, 0 };
-
         if (!GetConsoleScreenBufferInfo(h, &csbi)) {
             std::system("cls");
             return;
@@ -58,6 +59,7 @@ namespace tui {
         FillConsoleOutputAttribute(h, csbi.wAttributes, cellCount, home, &count);
         SetConsoleCursorPosition(h, home);
     }
+	// ===================== Show Cursor =====================
     inline void showCursor() {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_CURSOR_INFO info;
@@ -66,6 +68,7 @@ namespace tui {
             SetConsoleCursorInfo(h, &info);
         }
     }
+	// ===================== Hide Cursor =====================
     inline void hideCursor() {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_CURSOR_INFO info;
@@ -74,6 +77,7 @@ namespace tui {
             SetConsoleCursorInfo(h, &info);
         }
     }
+	// ===================== Color =====================
     inline void setColor(int colorCode) {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         static WORD defaultAttr = 0;
@@ -94,6 +98,7 @@ namespace tui {
         }
         SetConsoleTextAttribute(h, attr);
     }
+	// ===================== Reset Color =====================
     inline void resetColor() {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -101,6 +106,7 @@ namespace tui {
             SetConsoleTextAttribute(h, csbi.wAttributes);
         }
     }
+	// ===================== Read Key =====================
     inline KeyEvent readKey() {
         KeyEvent e;
         int c = _getch();
@@ -203,8 +209,7 @@ namespace tui {
         return e;
     }
 #endif
-
-    // ===================== Drawing helpers =====================
+	// ===================== Drawing helpers =====================
     inline void drawHLine(int x, int y, int w) {
         if (w <= 0) { return; }
         gotoxy(x, y);

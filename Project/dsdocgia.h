@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -6,7 +6,8 @@
 #include <ctime>
 #include "cautruc.h"
 
-// ========================= TIEN ICH NOI BO (BST) =========================
+// ========================= TIỆN ÍCH =========================
+// Tìm node có giá trị nhỏ nhất trong cây con
 inline DocGiaNode* _find_min(DocGiaNode* root) {
     if (root == NULL) {
         return NULL;
@@ -16,6 +17,7 @@ inline DocGiaNode* _find_min(DocGiaNode* root) {
     }
     return root;
 }
+// Xóa node có maThe khỏi cây
 inline void _delete_node(DocGiaNode*& root, int maThe) {
     if (root == NULL) {
         return;
@@ -44,8 +46,7 @@ inline void _delete_node(DocGiaNode*& root, int maThe) {
     }
 }
 
-// ========================= HAM L�I PUBLIC =========================
-// Tra ve con tro node co maThe; NULL neu khong co
+// Tìm node doc gia theo maThe
 inline DocGiaNode* tim_node_doc_gia(DocGiaNode* root, int maThe) {
     DocGiaNode* p = root;
     while (p != NULL) {
@@ -61,7 +62,7 @@ inline DocGiaNode* tim_node_doc_gia(DocGiaNode* root, int maThe) {
     }
     return NULL;
 }
-// Chen DocGia theo khoa maThe (neu da ton tai -> khong chen de tranh mat du lieu)
+// Chèn một doc gia mới vào cây (theo maThe)
 inline void insert_doc_gia(DocGiaNode*& root, const DocGia& v) {
     if (root == NULL) {
         root = new DocGiaNode(v);
@@ -77,8 +78,7 @@ inline void insert_doc_gia(DocGiaNode*& root, const DocGia& v) {
         else if (v.maThe > p->info.maThe) {
             p = p->right;
         }
-        else {
-            // Trung maThe -> bo qua (khong cap nhat de tranh mat du lieu)
+        else { // Trung maThe -> bo qua (khong cap nhat de tranh mat du lieu)           
             return;
         }
     }
@@ -89,7 +89,7 @@ inline void insert_doc_gia(DocGiaNode*& root, const DocGia& v) {
         parent->right = new DocGiaNode(v);
     }
 }
-// Dem so ban ghi muon co trang thai DANG MUON cua 1 doc gia
+// Dem so luong sach dang muon cua doc gia
 inline int dem_mt_dang_muon(const DocGia& dg) {
     int cnt = 0;
     for (MuonTraNode* p = dg.mtHead; p != NULL; p = p->next) {
@@ -111,8 +111,7 @@ inline bool xoa_doc_gia_if_no_borrowing(DocGiaNode*& root, int maThe) {
     _delete_node(root, maThe);
     return true;
 }
-
-// Duyet LNR va luu con tro DocGia* vao vector (de TUI sap xep/in bang)
+// Duyet cay LNR va luu cac con tro DocGia vao mang
 inline void duyet_LNR_luu_mang(DocGiaNode* root, std::vector<DocGia*>& out) {
     if (root == NULL) {
         return;
@@ -125,25 +124,21 @@ inline void duyet_LNR_luu_mang(DocGiaNode* root, std::vector<DocGia*>& out) {
 inline bool _exists_ma_the(DocGiaNode* root, int maThe) {
     return tim_node_doc_gia(root, maThe) != NULL;
 }
-// Sinh maThe 6 chu so khong trung (uu tien random, fallback quet tuan tu)
-inline int gen_ma_the_unique(DocGiaNode* root) {
-    // Pham vi: 100000..999999 (6 chu so)
+// Sinh maThe ngau nhien va khong trung tren cay
+inline int gen_ma_the_unique(DocGiaNode* root) {    
     static std::mt19937 rng(static_cast<unsigned>(std::time(NULL)));
-    std::uniform_int_distribution<int> dist(100000, 999999);
-    // Thu ngau nhien mot so lan
+    std::uniform_int_distribution<int> dist(100000, 999999);   
     for (int i = 0; i < 2048; i++) {
         int cand = dist(rng);
         if (!_exists_ma_the(root, cand)) {
             return cand;
         }
-    }
-    // Fallback: quet tuan tu
+    }   
     for (int cand = 100000; cand <= 999999; cand++) {
         if (!_exists_ma_the(root, cand)) {
             return cand;
         }
-    }
-    // Khong xay ra trong thuc te
+    }    
     return 999999;
 }
 //Dem tong so node tren cay 

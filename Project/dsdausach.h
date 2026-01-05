@@ -5,6 +5,7 @@
 #include <string>
 #include <algorithm>
 
+//================== KIỂM TRA TỒN TẠI THEO ISBN ==================
 inline bool is_isbn_exists(const std::vector<DauSach*>& arr, const std::string& isbn) {
     for (size_t i = 0; i < arr.size(); ++i) {
         if (arr[i] != NULL && arr[i]->ISBN == isbn) {
@@ -14,7 +15,7 @@ inline bool is_isbn_exists(const std::vector<DauSach*>& arr, const std::string& 
     return false;
 }
 
-// ================== TRA CỨU/CHÈN THEO TÊN ==================
+//================== TÌM ĐẦU SÁCH THEO ISBN ==================
 inline DauSach* tim_dau_sach_theo_isbn(const std::vector<DauSach*>& arr, const std::string& isbn) {
     for (size_t i = 0; i < arr.size(); i++) {
         if (arr[i] != NULL && arr[i]->ISBN == isbn) {
@@ -23,11 +24,11 @@ inline DauSach* tim_dau_sach_theo_isbn(const std::vector<DauSach*>& arr, const s
     }
     return NULL;
 }
-
+// ================== CHÈN ĐẦU SÁCH THEO TÊN SÁCH ==================
 inline std::string key_ten_sach(const DauSach* ds) {
     return to_upper_no_accents(trim(ds->tenSach));
 }
-
+//Chèn dau sach p vào arr sao cho arr vẫn được sắp xếp theo tên sách tăng dần
 inline void chen_dau_sach_sorted_by_ten(std::vector<DauSach*>& arr, DauSach* p) {
     std::string keyP = key_ten_sach(p);
     std::vector<DauSach*>::iterator it = arr.begin();
@@ -70,7 +71,7 @@ inline std::string lay_vi_tri_chung(const DauSach* ds) {
     }
     return first;
 }
-
+//Đặt vị trí cho tất cả bản sao.
 inline void doi_vi_tri_tat_ca_ban_sao(DauSach* ds, const std::string& ke, const std::string& hang) {
     if (ds == NULL) {
         return;
@@ -81,7 +82,7 @@ inline void doi_vi_tri_tat_ca_ban_sao(DauSach* ds, const std::string& ke, const 
     }
 }
 
-// ====== GIẢM SỐ LƯỢNG (chỉ xóa bản sao rảnh, từ cuối) ======
+// ====== GIẢM SỐ LƯỢNG ======
 inline bool giam_ban_sao_tu_cuoi(DauSach* ds, int soCanXoa) {
     if (ds == NULL || soCanXoa <= 0) {
         return true;

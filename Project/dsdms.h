@@ -3,7 +3,7 @@
 #include <vector>
 #include "cautruc.h"
 
-// =================== TIỆN ÍCH ĐẾM / TRA CỨU  ===================
+// =================== TIỆN ÍCH DSLK ===================
 // Đếm tổng số bản sao (node) trong DMS của một đầu sách.
 inline int dms_count_total(const DauSach* ds) {
     if (ds == NULL) {
@@ -53,8 +53,8 @@ inline DanhMucSachNode* dms_find_by_masach(DauSach* ds, const std::string& maSac
     return NULL;
 }
 
-// =================== THAO TÁC DSLK ===================
-// Thêm 1 node vào cuối DSLK, tự tăng soLuongBanSao.
+// =================== THÊM / GỠ BẢN SAO ===================
+//Thêm một node vào cuối DSLK, tự tăng soLuongBanSao.
 inline void dms_append_tail(DauSach* ds, DanhMucSachNode* node) {
     if (ds == NULL || node == NULL) {
         return;
@@ -119,7 +119,8 @@ inline std::vector<std::string> dms_list_masach(const DauSach* ds) {
 // Nếu toàn bộ bản sao có cùng vị trí, trả về vị trí đó; ngược lại trả chuỗi rỗng.
 // Đặt vị trí cho tất cả bản sao.
 
-// =================== ĐÁNH DẤU TRẠNG THÁI ===================
+// =================== ĐÁNH DẤU MƯỢN / TRẢ ===================
+// Đánh dấu mượn sách.
 inline bool dms_mark_borrowed(DanhMucSachNode* node) {
     if (node == NULL) {
         return false;
@@ -130,6 +131,7 @@ inline bool dms_mark_borrowed(DanhMucSachNode* node) {
     node->trangThai = BANSAO_DA_MUON;
     return true;
 }
+//  Đánh dấu trả sách.
 inline bool dms_mark_returned(DanhMucSachNode* node) {
     if (node == NULL) {
         return false;

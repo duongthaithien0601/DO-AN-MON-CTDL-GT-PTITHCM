@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -6,7 +6,8 @@
 #include "dsdocgia.h"
 #include "dsdausach.h"
 
-// ========================= THONG KE =========================
+// =================== THỐNG KÊ ĐẦU SÁCH ===================
+// Trả về top 10 đầu sách theo số lượt mượn (giảm dần).
 inline std::vector<const DauSach*> thongke_top10_theo_luot_muon(const std::vector<DauSach*>& dsArr) {
     std::vector<const DauSach*> a;
     a.reserve(dsArr.size());
@@ -23,10 +24,12 @@ inline std::vector<const DauSach*> thongke_top10_theo_luot_muon(const std::vecto
     if (a.size() > 10u) { a.resize(10u); }
     return a;
 }
+// =================== THỐNG KÊ ĐỘC GIẢ QUÁ HẠN ===================
 inline const DauSach* _tk_find_ds_by_isbn_const(const std::vector<DauSach*>& a, const std::string& isbn) {
     for (auto* ds : a) { if (ds != NULL && ds->ISBN == isbn) { return ds; } }
     return NULL;
 }
+// Thu thập các bản ghi quá hạn từ 1 độc giả
 inline void _tk_collect_qua_han_from_dg(DocGia* dg, const std::vector<DauSach*>& dsArr, const Date& today, std::vector<TKQuaHanRow>& out) {
     for (MuonTraNode* p = dg->mtHead; p != NULL; p = p->next) {
         if (p->trangThai != MT_DANG_MUON) { continue; }
@@ -46,12 +49,14 @@ inline void _tk_collect_qua_han_from_dg(DocGia* dg, const std::vector<DauSach*>&
         out.push_back(r);
     }
 }
+// Duyệt cây độc giả theo LNR để thu thập các bản ghi quá hạn
 inline void _tk_dfs_qua_han(DocGiaNode* root, const std::vector<DauSach*>& dsArr, const Date& today, std::vector<TKQuaHanRow>& out) {
     if (root == NULL) { return; }
     _tk_dfs_qua_han(root->left, dsArr, today, out);
     _tk_collect_qua_han_from_dg(&root->info, dsArr, today, out);
     _tk_dfs_qua_han(root->right, dsArr, today, out);
 }
+// Thống kê toàn bộ độc giả có sách mượn quá hạn
 inline std::vector<TKQuaHanRow> thongke_qua_han(DocGiaNode* root, const std::vector<DauSach*>& dsArr, const Date& today) {
     std::vector<TKQuaHanRow> rows;
     rows.reserve(128);

@@ -7,6 +7,7 @@
 #include "dsdocgia.h"
 #include "dsdausach.h"
 
+// =================== Tiện ích ===================
 // Tra ve ten sach theo ISBN; tra rong neu khong tim thay.
 inline std::string ten_sach_theo_isbn(const std::vector<DauSach*>& dsArr, const std::string& isbn) {
     const DauSach* p = tim_dau_sach_theo_isbn(dsArr, isbn);
@@ -15,7 +16,7 @@ inline std::string ten_sach_theo_isbn(const std::vector<DauSach*>& dsArr, const 
     }
     return p->tenSach;
 }
-// Tao & gan mot phieu muon moi vao danh sach cua doc gia (dau danh sach)
+// Tao va gan mot phieu muon moi vao danh sach cua doc gia (dau danh sach)
 inline void them_phieu_muon_cho_doc_gia(DocGia& dg, const std::string& maSach, const Date& ngayMuon) {
     MuonTraNode* node = new MuonTraNode();
     node->maSach = maSach;
@@ -24,7 +25,7 @@ inline void them_phieu_muon_cho_doc_gia(DocGia& dg, const std::string& maSach, c
     node->next = dg.mtHead;
     dg.mtHead = node;
 }
-// Liet ke cac ban ghi DANG MUON cua 1 doc gia
+// Liet ke cac ban ghi dang muon cua 1 doc gia
 inline std::vector<MuonTraNode*> list_dang_muon(DocGia& dg) {
     std::vector<MuonTraNode*> v;
     for (MuonTraNode* p = dg.mtHead; p != NULL; p = p->next) {
@@ -33,6 +34,20 @@ inline std::vector<MuonTraNode*> list_dang_muon(DocGia& dg) {
         }
     }
     return v;
+}
+// Dem so luong sach dang muon cua 1 doc gia
+inline int count_borrowed_by_isbn(DocGiaNode* root, const std::string& isbn) {
+    int cnt = 0;
+    std::vector<DocGia*> v;
+    duyet_LNR_luu_mang(root, v);
+    for (auto* dg : v) {
+        for (MuonTraNode* p = dg->mtHead; p; p = p->next) {            
+            if (p->trangThai == MT_DANG_MUON && masach_to_isbn(p->maSach) == isbn) {
+                cnt++;
+            }
+        }
+    }
+    return cnt;
 }
 // =================== QUÁ HẠN ===================
 inline bool doc_gia_co_qua_han_den_ngay(const DocGia& dg, const Date& today, int* outTreMax = NULL) {
@@ -56,7 +71,8 @@ inline bool doc_gia_co_qua_han_den_ngay(const DocGia& dg, const Date& today, int
     return coQuaHan;
 }
 
-// =================== MƯỢN / TRẢ – ===================
+// =================== MƯỢN / TRẢ ===================
+// Mượn sách 
 inline bool muon_sach(DocGia& dg,
     DauSach& ds,
     const Date& ngayMuon,
@@ -101,6 +117,7 @@ inline bool muon_sach(DocGia& dg,
     }
     return true;
 }
+// Trả sách   
 inline bool tra_sach(DocGia& dg,
     std::vector<DauSach*>& dsArr,
     MuonTraNode* target,
@@ -142,7 +159,6 @@ inline bool tra_sach(DocGia& dg,
         *outTre = tre;
     }
     (void)dg; 
-
     return true;
 }
 

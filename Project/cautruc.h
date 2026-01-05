@@ -82,7 +82,8 @@ struct TKQuaHanRow {
 };
 
 // ======================= HÀM TIỆN ÍCH =======================
-// ----------------- chuỗi : trim và chuẩn hóa -----------------
+// ----------------- Chuỗi: trim  -----------------
+// Cắt bỏ toàn bộ khoảng trắng ở đầu (bên trái)
 inline std::string ltrim_copy(const std::string& s) {
     size_t i = 0;
     while (i < s.size() && std::isspace(static_cast<unsigned char>(s[i])) != 0) {
@@ -90,6 +91,7 @@ inline std::string ltrim_copy(const std::string& s) {
     }
     return s.substr(i);
 }
+// Cắt bỏ toàn bộ khoảng trắng ở cuối (bên phải) của chuỗi
 inline std::string rtrim_copy(const std::string& s) {
     if (s.empty()) {
         return s;
@@ -100,15 +102,19 @@ inline std::string rtrim_copy(const std::string& s) {
     }
     return s.substr(0, i);
 }
+// Kết hợp cả hai hàm trên để cắt bỏ khoảng trắng ở cả đầu và cuối chuỗi.
 inline std::string trim(const std::string& s) {
     return rtrim_copy(ltrim_copy(s));
 }
+// ----------------- Chuyển đỗi kí tự thành chuỗi in hoa  -----------------
+// chuyển đổi các ký tự thường thành ký tự in hoa
 inline char _to_upper_ascii(char ch) {
     if (ch >= 'a' && ch <= 'z') {
         return static_cast<char>(ch - 'a' + 'A');
     }
     return ch;
 }
+// duyệt qua toàn bộ chuỗi và chuyển tất cả các ký tự thành chữ in hoa
 inline std::string to_upper_no_accents(const std::string& s) {
     std::string out;
     out.reserve(s.size());
@@ -117,7 +123,11 @@ inline std::string to_upper_no_accents(const std::string& s) {
     }
     return out;
 }
-// ----------------- NGÀY THÁNG -----------------
+inline std::string chuan_hoa_str(const std::string& s) {
+    return to_upper_no_accents(trim(s));
+}
+// ----------------- Ngày tháng -----------------
+// Kiểm tra tính hợp lệ của ngày tháng
 inline bool is_valid_date(const Date& a) {
     if (a.d <= 0 || a.m <= 0 || a.y <= 0) {
         return false;
@@ -133,6 +143,7 @@ inline bool is_valid_date(const Date& a) {
     }
     return (a.d >= 1 && a.d <= maxd);
 }
+// Phân tích chuỗi định dạng "DD/MM/YYYY" thành Date
 inline bool parse_date_ddmmyyyy(const std::string& s, Date& out) {
     std::string t = trim(s);
     int d = 0, m = 0, y = 0;
@@ -146,11 +157,13 @@ inline bool parse_date_ddmmyyyy(const std::string& s, Date& out) {
     out.d = d; out.m = m; out.y = y;
     return is_valid_date(out);
 }
+//Phiên bản trả về Date trực tiếp
 inline Date parse_date_ddmmyyyy(const std::string& s) {
     Date d{ 0,0,0 };
     (void)parse_date_ddmmyyyy(s, d);
     return d;
 }
+// Hàm chuyển đổi sang cấu trúc thời gian chuẩn
 inline std::tm _to_tm(const Date& a) {
     std::tm tmv;
     tmv.tm_sec = 0; tmv.tm_min = 0; tmv.tm_hour = 0;
@@ -160,6 +173,7 @@ inline std::tm _to_tm(const Date& a) {
     tmv.tm_isdst = -1;
     return tmv;
 }
+// Tính số ngày giữa hai ngày a và b (b - a)
 inline int days_between(const Date& a, const Date& b) {
     std::tm ta = _to_tm(a);
     std::tm tb = _to_tm(b);
@@ -203,7 +217,27 @@ inline std::string gen_isbn_unique(const std::vector<DauSach*>& dsArr) {
     }
     return "999999999";
 }
-inline std::string chuan_hoa_str(const std::string& s) {    
-    return to_upper_no_accents(trim(s));
+// Kiểm tra tên hợp lệ (không số, không ký tự đặc biệt)
+inline bool is_valid_name(const std::string& s) {
+    for (unsigned char c : s) {
+        if (std::isdigit(c)) return false;
+        if (std::ispunct(c)) return false;
+    }
+    return true;
 }
-
+// Kiểm tra chuỗi chỉ chứa số
+inline bool is_all_digits(const std::string& s) {
+    if (s.empty()) return false;
+    for (char c : s) {
+        if (!std::isdigit(static_cast<unsigned char>(c))) return false;
+    }
+    return true;
+}
+// Kiểm tra chuỗi chỉ chứa chữ cái
+inline bool is_all_alpha(const std::string& s) {
+    if (s.empty()) return false;
+    for (char c : s) {
+        if (!std::isalpha(static_cast<unsigned char>(c))) return false;
+    }
+    return true;
+}
