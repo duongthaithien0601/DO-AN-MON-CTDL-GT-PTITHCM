@@ -175,19 +175,14 @@ inline bool load_dms(std::vector<DauSach*>& dsArr) {
         std::string maSach = cols[1];
         int tt = std::atoi(cols[2].c_str());
         std::string viTri = cols[3];
-
         DauSach* ds = tim_dau_sach_theo_isbn(dsArr, isbn);
         if (ds == NULL) { continue; }
-
-        // ======== SỮA: khóa trạng thái về 0/1, loại bỏ mọi '2' cũ ========
         TrangThaiBanSao t = (tt == BANSAO_DA_MUON ? BANSAO_DA_MUON : BANSAO_CHO_MUON);
-
         DanhMucSachNode* node = new DanhMucSachNode();
         node->maSach = maSach;
-        node->trangThai = t;  // dùng giá trị đã chuẩn hóa
+        node->trangThai = t;
         node->viTri = viTri;
-        node->next = ds->dmsHead;
-        ds->dmsHead = node;
+        dms_append_tail(ds, node);
     }
     return true;
 }

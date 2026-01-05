@@ -118,9 +118,26 @@ namespace menutui {
             else if (ev.key == tui::K_ESC) return sel;
         }
     }
-    inline bool _contains_digit(const std::string& s) {
-        for (unsigned char c : s) if (std::isdigit(c)) return true;
-        return false;
+    inline bool _is_valid_name(const std::string& s) {
+        for (unsigned char c : s) {
+            if (std::isdigit(c)) return false; 
+            if (std::ispunct(c)) return false; 
+        }
+        return true;
+    }
+    inline bool _is_all_digits(const std::string& s) {
+        if (s.empty()) return false;
+        for (char c : s) {
+            if (!std::isdigit(static_cast<unsigned char>(c))) return false;
+        }
+        return true;
+    }
+    inline bool _is_all_alpha(const std::string& s) {
+        if (s.empty()) return false;
+        for (char c : s) {
+            if (!std::isalpha(static_cast<unsigned char>(c))) return false;
+        }
+        return true;
     }
     inline void _clear_line_at(int x, int y, int w) {
         tui::gotoxy(x, y); std::cout << std::string(w, ' ');
@@ -217,24 +234,31 @@ namespace menutui {
         std::string ho, ten;
         while (true) {
             int r = _read_line_allow_esc_if_empty(hoX, hoY, 60, ho);
-            if (r == -1) return; // ESC khi trống -> thoát form
-            if (!trim(ho).empty() && !_contains_digit(ho)) break;
-            // Báo lỗi và yêu cầu nhập lại tại chỗ
+            if (r == -1) return;            
+            if (!trim(ho).empty() && _is_valid_name(ho)) break;           
             tui::gotoxy(X0, footerY - 2);
             tui::setColor(tui::FG_ALERT);
-            if (trim(ho).empty()) { std::cout << "Ho va Ten Dem khong duoc de trong."; }
-            else { std::cout << "Ho va Ten Dem khong duoc chua so."; }
+            if (trim(ho).empty()) {
+                std::cout << "Ho va Ten Dem khong duoc de trong.";
+            }
+            else {
+                std::cout << "Ho va Ten Dem khong duoc chua so hoac ky tu dac biet.";
+            }
             tui::resetColor();
             _clear_line_at(hoX, hoY, 60);
-        }
+        }        
         while (true) {
             int r = _read_line_allow_esc_if_empty(tenX, tenY, 60, ten);
-            if (r == -1) return; // ESC khi trống -> thoát form
-            if (!trim(ten).empty() && !_contains_digit(ten)) break;
+            if (r == -1) return; 
+            if (!trim(ten).empty() && _is_valid_name(ten)) break;
             tui::gotoxy(X0, footerY - 2);
             tui::setColor(tui::FG_ALERT);
-            if (trim(ten).empty()) { std::cout << "Ten khong duoc de trong."; }
-            else { std::cout << "Ten khong duoc chua so."; }
+            if (trim(ten).empty()) {
+                std::cout << "Ten khong duoc de trong.";
+            }
+            else {
+                std::cout << "Ten khong duoc chua so hoac ky tu dac biet.";
+            }
             tui::resetColor();
             _clear_line_at(tenX, tenY, 60);
         }
@@ -244,8 +268,8 @@ namespace menutui {
         int trangThai = (selTT == 0 ? 1 : 0);
         DocGia dg;
         dg.maThe = maThe;
-        dg.ho = ho;
-        dg.ten = ten;
+        dg.ho = chuan_hoa_str(ho);
+        dg.ten = chuan_hoa_str(ten);
         dg.phai = phai;
         dg.trangThaiThe = trangThai;
         dg.mtHead = NULL;
@@ -318,19 +342,23 @@ namespace menutui {
         std::string inHo;
         while (true) {
             int r = _read_line_allow_esc_if_empty(hoX, hoY, 60, inHo);
-            if (r == -1) return; // ESC khi trống -> thoát toàn bộ form
-            if (inHo.empty() || !_contains_digit(inHo)) break;   // empty = giữ nguyên
+            if (r == -1) return;          
+            if (inHo.empty() || _is_valid_name(inHo)) break;
             tui::gotoxy(X0, footerY - 2);
-            tui::setColor(tui::FG_ALERT); std::cout << "Ho va Ten Dem khong duoc chua so."; tui::resetColor();
+            tui::setColor(tui::FG_ALERT);
+            std::cout << "Ho khong duoc chua so hoac ky tu dac biet.";
+            tui::resetColor();
             _clear_line_at(hoX, hoY, 60);
         }
         std::string inTen;
         while (true) {
             int r = _read_line_allow_esc_if_empty(tenX, tenY, 60, inTen);
             if (r == -1) return;
-            if (inTen.empty() || !_contains_digit(inTen)) break; // empty = giữ nguyên
+            if (inTen.empty() || _is_valid_name(inTen)) break;
             tui::gotoxy(X0, footerY - 2);
-            tui::setColor(tui::FG_ALERT); std::cout << "Ten khong duoc chua so."; tui::resetColor();
+            tui::setColor(tui::FG_ALERT);
+            std::cout << "Ten khong duoc chua so hoac ky tu dac biet.";
+            tui::resetColor();
             _clear_line_at(tenX, tenY, 60);
         }
         int selGT = (p->info.phai == "Nu") ? 1 : 0;
@@ -345,8 +373,8 @@ namespace menutui {
         int ok = _radio_at(X0 + 22, confirmY, { "Co","Khong" }, 0);
         if (ok != 0) { tui::gotoxy(X0, footerY - 2); std::cout << "Da huy cap nhat doc gia."; tui::press_any_key_to_back(4, footerY - 1); return; }
         // Áp dụng
-        if (!inHo.empty())  p->info.ho = inHo;
-        if (!inTen.empty()) p->info.ten = inTen;
+        if (!inHo.empty())  p->info.ho = chuan_hoa_str(inHo);
+        if (!inTen.empty()) p->info.ten = chuan_hoa_str(inTen);
         p->info.phai = newPhai;
         p->info.trangThaiThe = newTrangThai;
         // Thông báo kết quả
@@ -357,8 +385,10 @@ namespace menutui {
     //============= Quản lý đầu sách ====================//
     //================ Thêm đầu sách ===================//
     inline void form_them_dau_sach_tui(std::vector<DauSach*>& dsArr) {
-        const int w = 118, h = 20, X0 = 4, Y0 = 3; const int footerY = 1 + h - 2;
-        tui::clearScreen(); tui::drawBox(2, 1, w, h, "QUAN LY DAU SACH  >  THEM DAU SACH");
+        const int w = 118, h = 20, X0 = 4, Y0 = 3;
+        const int footerY = 1 + h - 2;
+        tui::clearScreen();
+        tui::drawBox(2, 1, w, h, "QUAN LY DAU SACH  >  THEM DAU SACH");
         std::string isbn = gen_isbn_unique(dsArr);
         int y = Y0 + 1;
         tui::gotoxy(X0, y); std::cout << "ISBN          : ";  tui::gotoxy(X0 + 16, y); std::cout << isbn; y += 2;
@@ -369,13 +399,77 @@ namespace menutui {
         tui::gotoxy(X0, y); std::cout << "The loai      : "; int tlX = X0 + 16, tlY = y; y += 2;
         int X1 = X0 + 68; int y2 = Y0 + 1;
         tui::gotoxy(X1, y2); std::cout << "So luong ban sao : "; int slX = X1 + 19, slY = y2; y2 += 2;
-        tui::gotoxy(X1, y2); std::cout << "Ke               : "; int keX = X1 + 19, keY = y2; y2 += 2;
-        tui::gotoxy(X1, y2); std::cout << "Hang             : "; int hangX = X1 + 19, hangY = y2; y2 += 2;
+        tui::gotoxy(X1, y2); std::cout << "Ke (VD : A )     : "; int keX = X1 + 19, keY = y2; y2 += 2;
+        tui::gotoxy(X1, y2); std::cout << "Hang  (VD : 1 )  : "; int hangX = X1 + 19, hangY = y2; y2 += 2;
         tui::print_footer_hints(4, footerY, "[Enter] Luu  -  [Esc] Quay lai");
         _flush_input_nonblock();
-        std::string ten; if (_read_line_allow_esc_if_empty(tenX, tenY, 60, ten) == -1) return;
-        int soTrang = 200; { int r = _read_int_opt_or_esc_at(stX, stY, 1, 5000, &soTrang); if (r == -1) return; }
-        std::string tacGia; if (_read_line_allow_esc_if_empty(tgX, tgY, 60, tacGia) == -1) return;
+        // 1. Nhập Tên Sách 
+        std::string ten;
+        while (true) {
+            int r = _read_line_allow_esc_if_empty(tenX, tenY, 45, ten);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (trim(ten).empty()) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Ten sach khong duoc de trong."; tui::resetColor();
+                tui::gotoxy(tenX, tenY); std::cout << std::string(45, ' ');
+                continue;
+            }
+            break;
+        }
+        // 2. Nhập Số Trang 
+        int soTrang = 0;
+        while (true) {
+            std::string s;
+            int r = _read_line_allow_esc_if_empty(stX, stY, 10, s);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (s.empty()) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "So trang khong duoc de trong."; tui::resetColor();
+                tui::gotoxy(stX, stY); std::cout << std::string(10, ' ');
+                continue;
+            }
+            if (!_is_all_digits(s)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: So trang chi duoc chua so."; tui::resetColor();
+                tui::gotoxy(stX, stY); std::cout << std::string(10, ' ');
+                continue;
+            }
+            try {
+                soTrang = std::stoi(s);
+                if (soTrang < 1 || soTrang > 5000) throw std::out_of_range("range");
+                break;
+            }
+            catch (...) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: So trang phai tu 1 den 5000."; tui::resetColor();
+                tui::gotoxy(stX, stY); std::cout << std::string(10, ' ');
+            }
+        }
+        // 3. Nhập Tác Giả 
+        std::string tacGia;
+        while (true) {
+            int r = _read_line_allow_esc_if_empty(tgX, tgY, 45, tacGia);
+            if (r == -1) return;
+
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+
+            if (trim(tacGia).empty()) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Tac gia khong duoc de trong."; tui::resetColor();
+                tui::gotoxy(tgX, tgY); std::cout << std::string(45, ' ');
+                continue;
+            }
+            if (!_is_valid_name(tacGia)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Tac gia khong duoc chua so hoac ky tu dac biet."; tui::resetColor();
+                tui::gotoxy(tgX, tgY); std::cout << std::string(45, ' ');
+                continue;
+            }
+            break;
+        }
+        // 4. Nhập năm xuất bản 
         std::time_t t = std::time(NULL); std::tm lt{};
 #ifdef _WIN32
         localtime_s(&lt, &t);
@@ -383,22 +477,139 @@ namespace menutui {
         std::tm* p = std::localtime(&t); if (p) lt = *p;
 #endif
         int currentYear = lt.tm_year + 1900;
-        int namXB = currentYear; { int r = _read_int_opt_or_esc_at(namX, namY, 1900, currentYear, &namXB); if (r == -1) return; }
-        std::string theLoai; if (_read_line_allow_esc_if_empty(tlX, tlY, 48, theLoai) == -1) return;
-        int soLuong = 1; int hasSL = _read_int_opt_or_esc_at(slX, slY, 1, 1000, &soLuong); if (hasSL == -1) return;
-        std::string ke; if (_read_line_allow_esc_if_empty(keX, keY, 16, ke) == -1) return;
-        std::string hang; if (_read_line_allow_esc_if_empty(hangX, hangY, 16, hang) == -1) return;
-        if (ten.empty() || tacGia.empty() || theLoai.empty() || ke.empty() || hang.empty()) {
-            tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT); std::cout << "Loi: Ten/Tac gia/The loai/Ke/Hang khong duoc de trong."; tui::resetColor();
-            tui::press_any_key_to_back(4, footerY - 1); return;
+        int namXB = 0;
+        while (true) {
+            std::string s;
+            int r = _read_line_allow_esc_if_empty(namX, namY, 10, s);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (s.empty()) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Nam xuat ban khong duoc de trong."; tui::resetColor();
+                tui::gotoxy(namX, namY); std::cout << std::string(10, ' ');
+                continue;
+            }
+            if (!_is_all_digits(s)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Nam XB khong duoc chua ky tu dac biet hoac so am."; tui::resetColor();
+                tui::gotoxy(namX, namY); std::cout << std::string(10, ' ');
+                continue;
+            }
+            try {
+                int v = std::stoi(s);
+                if (v < 1000 || v > currentYear + 100) throw std::out_of_range("range");
+                namXB = v;
+                break;
+            }
+            catch (...) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Nam XB khong hop le (VD: 1900-" << currentYear << ")."; tui::resetColor();
+                tui::gotoxy(namX, namY); std::cout << std::string(10, ' ');
+            }
         }
+        // 5. Nhập Thể Loại 
+        std::string theLoai;
+        while (true) {
+            int r = _read_line_allow_esc_if_empty(tlX, tlY, 48, theLoai);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (trim(theLoai).empty()) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "The loai khong duoc de trong."; tui::resetColor();
+                tui::gotoxy(tlX, tlY); std::cout << std::string(48, ' ');
+                continue;
+            }
+            if (!_is_valid_name(theLoai)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: The loai khong duoc chua so hoac ky tu dac biet."; tui::resetColor();
+                tui::gotoxy(tlX, tlY); std::cout << std::string(48, ' ');
+                continue;
+            }
+            break;
+        }
+        // 6. Nhập Số Lượng Bản Sao 
+        int soLuong = 0;
+        while (true) {
+            std::string s;
+            int r = _read_line_allow_esc_if_empty(slX, slY, 10, s);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (s.empty()) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "So luong ban sao khong duoc de trong."; tui::resetColor();
+                tui::gotoxy(slX, slY); std::cout << std::string(10, ' ');
+                continue;
+            }
+            if (!_is_all_digits(s)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: So luong chi duoc chua so."; tui::resetColor();
+                tui::gotoxy(slX, slY); std::cout << std::string(10, ' ');
+                continue;
+            }
+            try {
+                soLuong = std::stoi(s);
+                if (soLuong < 1 || soLuong > 5000) throw std::out_of_range("range");
+                break;
+            }
+            catch (...) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: So luong phai tu 1 den 5000."; tui::resetColor();
+                tui::gotoxy(slX, slY); std::cout << std::string(10, ' ');
+            }
+        }
+        // 7. Nhập Vị Trí Kệ 
+        std::string ke;
+        while (true) {
+            int r = _read_line_allow_esc_if_empty(keX, keY, 16, ke);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (trim(ke).empty()) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Ke sach khong duoc de trong."; tui::resetColor();
+                tui::gotoxy(keX, keY); std::cout << std::string(16, ' ');
+                continue;
+            }
+            if (!_is_all_alpha(ke)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Ke chi duoc chua chu cai (A-Z)."; tui::resetColor();
+                tui::gotoxy(keX, keY); std::cout << std::string(16, ' ');
+                continue;
+            }
+            break;
+        }
+        // 8. Nhập Vị Trí Hàng 
+        std::string hang;
+        while (true) {
+            int r = _read_line_allow_esc_if_empty(hangX, hangY, 16, hang);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (trim(hang).empty()) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Hang sach khong duoc de trong."; tui::resetColor();
+                tui::gotoxy(hangX, hangY); std::cout << std::string(16, ' ');
+                continue;
+            }
+            if (!_is_all_digits(hang)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Hang chi duoc chua so (0-9)."; tui::resetColor();
+                tui::gotoxy(hangX, hangY); std::cout << std::string(16, ' ');
+                continue;
+            }
+            break;
+        }
+        // 9.  Lưu dữ liệu
         DauSach* item = new DauSach();
-        item->ISBN = isbn; item->tenSach = ten; item->soTrang = soTrang;
-        item->tacGia = tacGia; item->namXB = namXB; item->theLoai = theLoai;
+        item->ISBN = isbn;
+        item->tenSach = chuan_hoa_str(ten);
+        item->tacGia = chuan_hoa_str(tacGia);
+        item->theLoai = chuan_hoa_str(theLoai);
+        item->soTrang = soTrang;
+        item->namXB = namXB;
         item->dmsHead = NULL; item->soLuongBanSao = 0; item->soLuotMuon = 0;
-        tao_ban_sao_tu_dong(item, soLuong, ke, hang);
+        tao_ban_sao_tu_dong(item, soLuong, chuan_hoa_str(ke), hang);
         chen_dau_sach_sorted_by_ten(dsArr, item);
-        tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_OK); std::cout << "Da them dau sach [" << isbn << "]."; tui::resetColor();
+        tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_OK);
+        std::cout << "Da them dau sach [" << isbn << "]."; tui::resetColor();
         tui::press_any_key_to_back(4, footerY - 1);
     }
 
@@ -435,24 +646,20 @@ namespace menutui {
         const int w = 118, h = 26, X0 = 4, Y0 = 3;
         const int footerY = 1 + h - 2;
         tui::clearScreen();
-        tui::drawBox(2, 1, w, h, "QUAN LY DAU SACH  >  CAP NHAT THONG TIN");
-        int y = Y0 + 1;
-        tui::gotoxy(X0, y); std::cout << "Nhap ISBN        : ";
-        int isbnX = X0 + 18, isbnY = y;
-        y += 2;
-        tui::gotoxy(X0, y++); std::cout << "(Bo trong neu khong doi)";
-        y++;
+        tui::drawBox(2, 1, w, h, "QUAN LY DAU SACH  >  CAP NHAT THONG TIN");int y = Y0 + 1;
+        tui::gotoxy(X0, y); std::cout << "Nhap ISBN        : ";int isbnX = X0 + 18, isbnY = y;y += 2;
+        tui::gotoxy(X0, y++); std::cout << "(Bo trong neu khong doi)";y++;
         tui::gotoxy(X0, y); std::cout << "TEN SACH         : "; int tenX = X0 + 18, tenY = y; y += 2;
         tui::gotoxy(X0, y); std::cout << "TAC GIA          : "; int tgX = X0 + 18, tgY = y; y += 2;
         tui::gotoxy(X0, y); std::cout << "NAM XUAT BAN     : "; int namX = X0 + 18, namY = y; y += 2;
-        tui::gotoxy(X0, y); std::cout << "SO TRANG         : "; int stX = X0 + 18, stY = y; y += 2;
+        tui::gotoxy(X0, y); std::cout << "SO TRANG         : "; int stX = X0 + 18, stY = y; y += 1;
         tui::gotoxy(X0, y); std::cout << "SO LUONG BAN SAO : "; int slX = X0 + 18, slY = y; y += 2;
-        tui::gotoxy(X0, y); std::cout << "KE               : "; int keX = X0 + 18, keY = y; y += 2;
-        tui::gotoxy(X0, y); std::cout << "HANG             : "; int hangX = X0 + 18, hangY = y; y += 2;
+        tui::gotoxy(X0, y); std::cout << "KE  (VD : A )    : "; int keX = X0 + 18, keY = y; y += 2;
+        tui::gotoxy(X0, y); std::cout << "HANG (VD : 1 )   : "; int hangX = X0 + 18, hangY = y; y += 2;
         tui::print_footer_hints(4, footerY, "[Enter] Luu  -  [Esc] Quay lai");
-        // ==== ĐỌC DỮ LIỆU ====
         _flush_input_nonblock();
-        std::string isbn; if (_read_line_allow_esc_if_empty(isbnX, isbnY, 20, isbn) == -1) return;
+        std::string isbn;
+        if (_read_line_allow_esc_if_empty(isbnX, isbnY, 20, isbn) == -1) return;
         DauSach* ds = tim_dau_sach_theo_isbn(dsArr, isbn);
         if (!ds) {
             tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
@@ -460,13 +667,142 @@ namespace menutui {
             tui::press_any_key_to_back(4, footerY - 1);
             return;
         }
-        std::string inTen; if (_read_line_allow_esc_if_empty(tenX, tenY, 60, inTen) == -1) return;
-        std::string inTG;  if (_read_line_allow_esc_if_empty(tgX, tgY, 60, inTG) == -1)  return;
-        int inNam = 0; { int r = _read_int_opt_or_esc_at(namX, namY, 1900, 3000, &inNam); if (r == -1) return; }
-        int inST = 0; { int r = _read_int_opt_or_esc_at(stX, stY, 1, 5000, &inST); if (r == -1) return; }
-        int slTarget = 0; int hasSL = _read_int_opt_or_esc_at(slX, slY, 1, 10000, &slTarget); if (hasSL == -1) return;
-        std::string inKe;  if (_read_line_allow_esc_if_empty(keX, keY, 16, inKe) == -1)   return;
-        std::string inHang; if (_read_line_allow_esc_if_empty(hangX, hangY, 16, inHang) == -1) return;
+        std::string inTen;
+        if (_read_line_allow_esc_if_empty(tenX, tenY, 60, inTen) == -1) return;
+        // 1. Nhập Tác Giả 
+        std::string inTG;
+        while (true) {
+            int r = _read_line_allow_esc_if_empty(tgX, tgY, 60, inTG);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (inTG.empty()) break;
+            if (!_is_valid_name(inTG)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Tac gia khong duoc chua so hoac ky tu dac biet."; tui::resetColor();
+                tui::gotoxy(tgX, tgY); std::cout << std::string(60, ' ');
+                continue;
+            }
+            break;
+        }
+        // 2. Nhập năm xuât bản 
+        int inNam = 0;
+        while (true) {
+            std::string s;
+            int r = _read_line_allow_esc_if_empty(namX, namY, 10, s);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (s.empty()) {
+                inNam = 0;
+                break;
+            }
+            if (!_is_all_digits(s)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Nam XB khong duoc chua ky tu dac biet hoac so am."; tui::resetColor();
+                tui::gotoxy(namX, namY); std::cout << std::string(10, ' ');
+                continue;
+            }
+            try {
+                int v = std::stoi(s);
+                if (v < 1000 || v > 3000) throw std::out_of_range("range");
+                inNam = v;
+                break;
+            }
+            catch (...) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Nam XB khong hop le."; tui::resetColor();
+                tui::gotoxy(namX, namY); std::cout << std::string(10, ' ');
+            }
+        }
+        // 3. Nhập Số Trang
+        int inST = 0;
+        while (true) {
+            std::string s;
+            int r = _read_line_allow_esc_if_empty(stX, stY, 10, s);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (s.empty()) {
+                inST = 0;
+                break;
+            }
+            if (!_is_all_digits(s)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Chi duoc nhap so (khong chu/ky tu la)."; tui::resetColor();
+                tui::gotoxy(stX, stY); std::cout << std::string(10, ' ');
+                continue;
+            }
+            try {
+                int v = std::stoi(s);
+                if (v < 1 || v > 5000) throw std::out_of_range("range");
+                inST = v;
+                break;
+            }
+            catch (...) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: So trang phai tu 1 den 5000."; tui::resetColor();
+                tui::gotoxy(stX, stY); std::cout << std::string(10, ' ');
+            }
+        }
+        // 4. Nhập Số Lượng
+        int slTarget = 0;
+        int hasSL = 0;
+        while (true) {
+            std::string s;
+            int r = _read_line_allow_esc_if_empty(slX, slY, 10, s);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (s.empty()) {
+                hasSL = 0;
+                break;
+            }
+            if (!_is_all_digits(s)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Chi duoc nhap so (khong chu/ky tu la)."; tui::resetColor();
+                tui::gotoxy(slX, slY); std::cout << std::string(10, ' ');
+                continue;
+            }
+            try {
+                int v = std::stoi(s);
+                if (v < 1 || v > 5000) throw std::out_of_range("range");
+                slTarget = v;
+                hasSL = 1;
+                break;
+            }
+            catch (...) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: So luong phai tu 1 den 5000."; tui::resetColor();
+                tui::gotoxy(slX, slY); std::cout << std::string(10, ' ');
+            }
+        }
+        // 5. Nhập Kệ 
+        std::string inKe;
+        while (true) {
+            int r = _read_line_allow_esc_if_empty(keX, keY, 16, inKe);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (inKe.empty()) break; // Cho phép rỗng (không đổi)
+            if (!_is_all_alpha(inKe)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Ke chi duoc chua chu cai (A-Z)."; tui::resetColor();
+                tui::gotoxy(keX, keY); std::cout << std::string(16, ' ');
+                continue;
+            }
+            break;
+        }
+        // 6. Nhập Hàng 
+        std::string inHang;
+        while (true) {
+            int r = _read_line_allow_esc_if_empty(hangX, hangY, 16, inHang);
+            if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (inHang.empty()) break; // Cho phép rỗng (không đổi)
+            if (!_is_all_digits(inHang)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Hang chi duoc chua so (0-9)."; tui::resetColor();
+                tui::gotoxy(hangX, hangY); std::cout << std::string(16, ' ');
+                continue;
+            }
+            break;
+        }
         // ==== XÁC NHẬN ====
         int confirmY = hangY + 2;
         if (confirmY > footerY - 3) confirmY = footerY - 3;
@@ -474,8 +810,13 @@ namespace menutui {
         std::cout << "Xac nhan cap nhat: ";
         int ok = _radio_at(X0 + 22, confirmY, { "Co", "Khong" }, 0);
         // ==== ÁP DỤNG THAY ĐỔI ====
-        if (!inTen.empty()) ds->tenSach = inTen;
-        if (!inTG.empty())  ds->tacGia = inTG;
+        if (ok != 0) {
+            tui::gotoxy(X0, footerY - 2); std::cout << "Da huy cap nhat.";
+            tui::press_any_key_to_back(4, footerY - 1);
+            return;
+        }
+        if (!inTen.empty()) ds->tenSach = chuan_hoa_str(inTen);
+        if (!inTG.empty())  ds->tacGia = chuan_hoa_str(inTG);
         if (inNam > 0)      ds->namXB = inNam;
         if (inST > 0)       ds->soTrang = inST;
         // Đổi vị trí đồng loạt nếu nhập
@@ -487,7 +828,7 @@ namespace menutui {
                 keCur = trim(viTri.substr(pKe + 3, pH - (pKe + 3)));
                 hangCur = trim(viTri.substr(pH + 8));
             }
-            doi_vi_tri_tat_ca_ban_sao(ds, inKe.empty() ? keCur : inKe,
+            doi_vi_tri_tat_ca_ban_sao(ds, inKe.empty() ? keCur : chuan_hoa_str(inKe),
                 inHang.empty() ? hangCur : inHang);
         }
         // Thay đổi số lượng
@@ -501,13 +842,13 @@ namespace menutui {
                     hangCur = trim(viTri.substr(pH + 8));
                 }
                 tao_ban_sao_tu_dong(ds, slTarget - ds->soLuongBanSao,
-                    inKe.empty() ? keCur : inKe, inHang.empty() ? hangCur : inHang);
+                    inKe.empty() ? keCur : chuan_hoa_str(inKe), inHang.empty() ? hangCur : inHang);
             }
             else if (slTarget < ds->soLuongBanSao) {
                 (void)giam_ban_sao_tu_cuoi(ds, ds->soLuongBanSao - slTarget);
             }
         }
-        // Thông báo kết quả
+        // 5. Thông báo kết quả
         tui::gotoxy(X0, footerY - 2); std::cout << "Da cap nhat dau sach.";
         tui::press_any_key_to_back(4, footerY - 1);
     }
@@ -739,8 +1080,7 @@ namespace menutui {
             std::string isbn0 = isbn_from_masach(mt->maSach);
             std::string ten0;
             if (DauSach* ds0 = tim_dau_sach_theo_isbn(dsArr, isbn0)) ten0 = ds0->tenSach;
-
-            if (tableY >= footerY - 3) break; // giữ chỗ cho thông báo/footer
+            if (tableY >= footerY - 3) break; 
             tui::gotoxy(X0, tableY++);
             std::cout << LPAD(std::to_string(++stt), CW_STT) << " | "
                 << PAD(mt->maSach, CW_MS) << " | "
@@ -903,16 +1243,41 @@ namespace menutui {
             tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT); std::cout << "Lua chon khong hop le."; tui::resetColor();
             tui::press_any_key_to_back(4, footerY - 1); return;
         }
-        Date ngayTra{};
+        Date ngayTra{};    
+        tui::gotoxy(X0, footerY - 2);
+        std::cout << std::string(90, ' ');
         while (true) {
-            tui::gotoxy(X0, chooseY + 3); std::cout << "Nhap ngay tra (dd/mm/yyyy): ";
+            tui::gotoxy(X0, chooseY + 3);
+            std::cout << "Nhap ngay tra (dd/mm/yyyy): ";
             int ntX = X0 + 30, ntY = chooseY + 3;
-            std::string s; int r = _read_line_allow_esc_if_empty(ntX, ntY, 16, s);
+            std::string s;
+            int r = _read_line_allow_esc_if_empty(ntX, ntY, 16, s);
             if (r == -1) return;
             ngayTra = parse_date_ddmmyyyy(s);
-            if (is_valid_date(ngayTra)) break;
-            tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT); std::cout << "Ngay khong hop le. Moi nhap lai!"; tui::resetColor();
-            tui::gotoxy(ntX, ntY); std::cout << std::string(20, ' ');
+            // 1. Kiểm tra định dạng
+            if (!is_valid_date(ngayTra)) {
+                tui::gotoxy(X0, footerY - 2);
+                std::cout << std::string(90, ' '); 
+                tui::gotoxy(X0, footerY - 2);
+                tui::setColor(tui::FG_ALERT);
+                std::cout << "Dinh dang ngay khong dung. Moi nhap lai!";
+                tui::resetColor();
+                tui::gotoxy(ntX, ntY); std::cout << std::string(16, ' ');
+                continue;
+            }
+            // 2. Kiểm tra logic: Ngày trả < Ngày mượn
+            if (diff_days(ngayTra, target->ngayMuon) < 0) {
+                tui::gotoxy(X0, footerY - 2);
+                std::cout << std::string(90, ' '); 
+                tui::gotoxy(X0, footerY - 2);
+                tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Ngay tra khong hop le (Ngay tra phai be hon ngay muon)";
+                tui::resetColor();
+                tui::gotoxy(ntX, ntY); std::cout << std::string(16, ' ');
+                continue;
+            }
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            break;
         }
         target->trangThai = MT_DA_TRA;
         target->ngayTra = ngayTra;
@@ -1240,7 +1605,6 @@ namespace menutui {
         size_t total = rows.size();
         size_t pages = (total == 0 ? 1 : (total + PAGE - 1) / PAGE);
         size_t page = 0;
-
         const int headerY = Y0 + 3;          
         const int tableY = headerY + 2;     
         const int dataH = PAGE;   

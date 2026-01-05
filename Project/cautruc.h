@@ -81,8 +81,8 @@ struct TKQuaHanRow {
     int tre = 0; // so ngay tre (>0)
 };
 
-// ======================= HÀM TIỆN ÍCH (CHUỖI, NGÀY, MÃ SÁCH, v.v.) =======================
-// ----------------- CHUỖI: TRIM & CHUẨN HÓA -----------------
+// ======================= HÀM TIỆN ÍCH =======================
+// ----------------- chuỗi : trim và chuẩn hóa -----------------
 inline std::string ltrim_copy(const std::string& s) {
     size_t i = 0;
     while (i < s.size() && std::isspace(static_cast<unsigned char>(s[i])) != 0) {
@@ -171,8 +171,6 @@ inline int days_between(const Date& a, const Date& b) {
 inline int diff_days(const Date& b, const Date& a) {
     return days_between(a, b);
 }
-
-// ======================= TIỆN ÍCH KHÁC =======================
 // Tách ISBN từ "ISBN-idx"
 inline std::string masach_to_isbn(const std::string& maSach) {
     size_t pos = maSach.find('-');
@@ -187,7 +185,7 @@ inline std::string make_masach(const std::string& isbn, int idx) {
     oss << trim(isbn) << "-" << idx;
     return oss.str();
 }
-// gen_isbn_unique cần is_isbn_exists(...) (được định nghĩa ở dsdausach.h)
+// gen_isbn_unique cần is_isbn_exists(...) 
 inline bool is_isbn_exists(const std::vector<DauSach*>& arr, const std::string& isbn);
 inline std::string gen_isbn_unique(const std::vector<DauSach*>& dsArr) {
     std::mt19937 rng(static_cast<unsigned int>(std::time(NULL)));
@@ -205,5 +203,7 @@ inline std::string gen_isbn_unique(const std::vector<DauSach*>& dsArr) {
     }
     return "999999999";
 }
-
+inline std::string chuan_hoa_str(const std::string& s) {    
+    return to_upper_no_accents(trim(s));
+}
 
