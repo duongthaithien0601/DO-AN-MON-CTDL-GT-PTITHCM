@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿#pragma warning(disable : 4996)
+#pragma once
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -127,35 +128,32 @@ inline std::string chuan_hoa_str(const std::string& s) {
     return to_upper_no_accents(trim(s));
 }
 // ----------------- Ngày tháng -----------------
-// Kiểm tra tính hợp lệ của ngày tháng
-inline bool is_valid_date(const Date& a) {
-    if (a.d <= 0 || a.m <= 0 || a.y <= 0) {
+// Kiểm tra tính hợp lệ của ngày tháng 
+inline bool is_valid_date(const Date& a) {    
+    if (a.y <= 0 || a.m < 1 || a.m > 12 || a.d <= 0) {
         return false;
-    }
-    if (a.m < 1 || a.m > 12) {
-        return false;
-    }
-    static const int mdays[] = { 0,31,28,31,30,31,30,31,31,30,31,30,31 };
-    int maxd = mdays[a.m];
-    bool leap = ((a.y % 400 == 0) || ((a.y % 4 == 0) && (a.y % 100 != 0)));
-    if (a.m == 2 && leap) {
-        maxd = 29;
-    }
-    return (a.d >= 1 && a.d <= maxd);
+    }    
+    static const int daysInMonth[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };    
+    if (a.m == 2) {
+        int maxFeb = 28;        
+        if ((a.y % 400 == 0) || (a.y % 4 == 0 && a.y % 100 != 0)) {
+            maxFeb = 29;
+        }
+        return a.d <= maxFeb;
+    }    
+    return a.d <= daysInMonth[a.m];
 }
 // Phân tích chuỗi định dạng "DD/MM/YYYY" thành Date
 inline bool parse_date_ddmmyyyy(const std::string& s, Date& out) {
-    std::string t = trim(s);
-    int d = 0, m = 0, y = 0;
-    char c1 = 0, c2 = 0;
-    std::istringstream iss(t);
-    if (!(iss >> d)) { return false; }
-    if (!(iss >> c1) || c1 != '/') { return false; }
-    if (!(iss >> m)) { return false; }
-    if (!(iss >> c2) || c2 != '/') { return false; }
-    if (!(iss >> y)) { return false; }
-    out.d = d; out.m = m; out.y = y;
-    return is_valid_date(out);
+    int d, m, y;
+    char c1, c2;
+    if (std::sscanf(s.c_str(), "%d%c%d%c%d", &d, &c1, &m, &c2, &y) == 5) {
+        if (c1 == '/' && c2 == '/') {
+            out.d = d; out.m = m; out.y = y;
+            return is_valid_date(out);
+        }
+    }
+    return false;
 }
 //Phiên bản trả về Date trực tiếp
 inline Date parse_date_ddmmyyyy(const std::string& s) {
@@ -163,60 +161,28 @@ inline Date parse_date_ddmmyyyy(const std::string& s) {
     (void)parse_date_ddmmyyyy(s, d);
     return d;
 }
-// Hàm chuyển đổi sang cấu trúc thời gian chuẩn
-inline std::tm _to_tm(const Date& a) {
-    std::tm tmv;
-    tmv.tm_sec = 0; tmv.tm_min = 0; tmv.tm_hour = 0;
-    tmv.tm_mday = (a.d <= 0 ? 1 : a.d);
-    tmv.tm_mon = (a.m <= 0 ? 0 : (a.m - 1));
-    tmv.tm_year = (a.y <= 0 ? 70 : (a.y - 1900)); 
-    tmv.tm_isdst = -1;
-    return tmv;
+// Tính số ngày giữa hai ngày (b = ngày sau, a = ngày trước)
+inline int date_to_serial_day(const Date& a) {
+    int y = a.y;
+    int m = a.m;
+    int d = a.d;
+    if (m < 3) {
+        y -= 1;
+        m += 12;
+    }
+    return 365 * y + y / 4 - y / 100 + y / 400 + (153 * m - 457) / 5 + d - 306;
 }
-// Tính số ngày giữa hai ngày a và b (b - a)
+// a -> b
 inline int days_between(const Date& a, const Date& b) {
-    std::tm ta = _to_tm(a);
-    std::tm tb = _to_tm(b);
-    std::time_t ea = std::mktime(&ta);
-    std::time_t eb = std::mktime(&tb);
-    long diff = static_cast<long>(std::difftime(eb, ea) / (24L * 3600L));
-    return static_cast<int>(diff);
+    if (!is_valid_date(a) || !is_valid_date(b)) {
+        return 0;
+    }
+    return date_to_serial_day(b) - date_to_serial_day(a);
 }
 inline int diff_days(const Date& b, const Date& a) {
     return days_between(a, b);
 }
-// Tách ISBN từ "ISBN-idx"
-inline std::string masach_to_isbn(const std::string& maSach) {
-    size_t pos = maSach.find('-');
-    if (pos == std::string::npos) {
-        return maSach;
-    }
-    return maSach.substr(0, pos);
-}
-// Tạo mã bản sao "ISBN-idx"
-inline std::string make_masach(const std::string& isbn, int idx) {
-    std::ostringstream oss;
-    oss << trim(isbn) << "-" << idx;
-    return oss.str();
-}
-// gen_isbn_unique cần is_isbn_exists(...) 
-inline bool is_isbn_exists(const std::vector<DauSach*>& arr, const std::string& isbn);
-inline std::string gen_isbn_unique(const std::vector<DauSach*>& dsArr) {
-    std::mt19937 rng(static_cast<unsigned int>(std::time(NULL)));
-    std::uniform_int_distribution<int> dist(100000000, 999999999);
-    for (int i = 0; i < 4096; i++) {
-        int x = dist(rng);
-        std::ostringstream oss; oss << x;
-        std::string cand = oss.str();
-        if (!is_isbn_exists(dsArr, cand)) { return cand; }
-    }
-    for (int x = 100000000; x <= 999999999; x++) {
-        std::ostringstream oss; oss << x;
-        std::string cand = oss.str();
-        if (!is_isbn_exists(dsArr, cand)) { return cand; }
-    }
-    return "999999999";
-}
+// ----------------- Các tiện ích còn lại  -----------------
 // Kiểm tra tên hợp lệ (không số, không ký tự đặc biệt)
 inline bool is_valid_name(const std::string& s) {
     for (unsigned char c : s) {
@@ -240,4 +206,46 @@ inline bool is_all_alpha(const std::string& s) {
         if (!std::isalpha(static_cast<unsigned char>(c))) return false;
     }
     return true;
+}
+// Tách ISBN từ "ISBN-idx"
+inline std::string masach_to_isbn(const std::string& maSach) {
+    size_t pos = maSach.find('-');
+    if (pos == std::string::npos) {
+        return maSach;
+    }
+    return maSach.substr(0, pos);
+}
+// Tạo mã bản sao "ISBN-idx"
+inline std::string make_masach(const std::string& isbn, int idx) {
+    std::ostringstream oss;
+    oss << trim(isbn) << "-" << idx;
+    return oss.str();
+}
+// Kiểm tra ISBN đã tồn tại trong danh sách đầu sách chưa
+inline bool is_isbn_exists(const std::vector<DauSach*>& arr, const std::string& isbn);
+// Hàm sinh ISBN ngẫu nhiên
+inline std::string gen_isbn_unique(const std::vector<DauSach*>& dsArr) {
+    static std::mt19937 rng(static_cast<unsigned int>(std::time(NULL)));
+    static std::uniform_int_distribution<int> dist(100000000, 999999999);
+    for (int i = 0; i < 5000; i++) {
+        int x = dist(rng);
+        std::string cand = std::to_string(x); 
+        if (!is_isbn_exists(dsArr, cand)) {
+            return cand;
+        }
+    }
+    int maxVal = 100000000;
+    for (const auto* ds : dsArr) {
+        if (ds != NULL && ds->ISBN.length() == 9 && is_all_digits(ds->ISBN)) {
+            try {
+                int v = std::stoi(ds->ISBN);
+                if (v > maxVal) maxVal = v;
+            }
+            catch (...) {}
+        }
+    }
+    if (maxVal < 999999999) {
+        return std::to_string(maxVal + 1);
+    }
+    return "999999999";
 }

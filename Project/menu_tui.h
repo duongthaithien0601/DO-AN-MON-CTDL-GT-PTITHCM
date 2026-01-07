@@ -538,7 +538,7 @@ namespace menutui {
 #else
         std::tm* p = std::localtime(&t); if (p) lt = *p;
 #endif
-        int currentYear = lt.tm_year + 1900;
+        int currentYear = today_date().y; 
         int namXB = 0;
         while (true) {
             std::string s;
@@ -553,19 +553,24 @@ namespace menutui {
             }
             if (!is_all_digits(s)) {
                 tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
-                std::cout << "Loi: Nam XB khong duoc chua ky tu dac biet hoac so am."; tui::resetColor();
+                std::cout << "Loi: Nam xuat ban khong duoc chua ky tu dac biet."; tui::resetColor();
                 tui::gotoxy(namX, namY); std::cout << std::string(10, ' ');
                 continue;
             }
             try {
                 int v = std::stoi(s);
-                if (v < 1000 || v > currentYear + 100) throw std::out_of_range("range");
+                if (v < 1500 || v > currentYear) {
+                    tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                    std::cout << "Loi: Nam xuat ban kho hop le. "; tui::resetColor();
+                    tui::gotoxy(namX, namY); std::cout << std::string(10, ' ');
+                    continue;
+                }
                 namXB = v;
                 break;
             }
             catch (...) {
                 tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
-                std::cout << "Loi: Nam XB khong hop le (VD: 1900-" << currentYear << ")."; tui::resetColor();
+                std::cout << "Loi: Nam xuat ban kho hop le ."; tui::resetColor();
                 tui::gotoxy(namX, namY); std::cout << std::string(10, ' ');
             }
         }
@@ -745,6 +750,7 @@ namespace menutui {
             break;
         }
         // 2. Nhập năm xuât bản 
+        int currentYear = today_date().y; 
         int inNam = 0;
         while (true) {
             std::string s;
@@ -757,19 +763,24 @@ namespace menutui {
             }
             if (!is_all_digits(s)) {
                 tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
-                std::cout << "Loi: Nam XB khong duoc chua ky tu dac biet hoac so am."; tui::resetColor();
+                std::cout << "Loi: Nam xuat ban khong duoc chua ky tu dac biet."; tui::resetColor();
                 tui::gotoxy(namX, namY); std::cout << std::string(10, ' ');
                 continue;
             }
             try {
                 int v = std::stoi(s);
-                if (v < 1000 || v > 3000) throw std::out_of_range("range");
+                if (v < 1500 || v > currentYear) {
+                    tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                    std::cout << "Loi: Nam xuat ban kho hop le ."; tui::resetColor();
+                    tui::gotoxy(namX, namY); std::cout << std::string(10, ' ');
+                    continue;
+                }
                 inNam = v;
                 break;
             }
             catch (...) {
                 tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
-                std::cout << "Loi: Nam XB khong hop le."; tui::resetColor();
+                std::cout << "Loi: Nam xuat ban kho hop le ."; tui::resetColor();
                 tui::gotoxy(namX, namY); std::cout << std::string(10, ' ');
             }
         }
@@ -1183,14 +1194,26 @@ namespace menutui {
             tui::press_any_key_to_back(4, footerY - 1); return;
         }
         Date ngayMuon{};
+        int currentYear = today_date().y; 
         while (true) {
             std::string s; int r = _read_line_allow_esc_if_empty(ngayX, ngayY, 16, s);
             if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' '); 
             ngayMuon = parse_date_ddmmyyyy(s);
-            if (is_valid_date(ngayMuon)) break;
-            tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
-            std::cout << "Ngay khong hop le. Moi nhap lai!"; tui::resetColor();
-            tui::gotoxy(ngayX, ngayY); std::cout << std::string(20, ' ');
+            if (!is_valid_date(ngayMuon)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Ngay khong hop le (dd/mm/yyyy). Moi nhap lai!"; tui::resetColor();
+                tui::gotoxy(ngayX, ngayY); std::cout << std::string(20, ' ');
+                continue;
+            }
+            if (ngayMuon.y < 1500 || ngayMuon.y > currentYear) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Nam khong hop le"; tui::resetColor();
+                tui::gotoxy(ngayX, ngayY); std::cout << std::string(20, ' ');
+                continue;
+            }
+
+            break; 
         }
         int treMax = 0;
         if (doc_gia_co_qua_han_den_ngay(pNode->info, ngayMuon, &treMax)) {
@@ -1309,9 +1332,9 @@ namespace menutui {
             tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT); std::cout << "Lua chon khong hop le."; tui::resetColor();
             tui::press_any_key_to_back(4, footerY - 1); return;
         }
-        Date ngayTra{};    
-        tui::gotoxy(X0, footerY - 2);
-        std::cout << std::string(90, ' ');
+        Date ngayTra{};
+        int currentYear = today_date().y; 
+        tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
         while (true) {
             tui::gotoxy(X0, chooseY + 3);
             std::cout << "Nhap ngay tra (dd/mm/yyyy): ";
@@ -1319,31 +1342,32 @@ namespace menutui {
             std::string s;
             int r = _read_line_allow_esc_if_empty(ntX, ntY, 16, s);
             if (r == -1) return;
-            ngayTra = parse_date_ddmmyyyy(s);
-            // 1. Kiểm tra định dạng
-            if (!is_valid_date(ngayTra)) {
-                tui::gotoxy(X0, footerY - 2);
-                std::cout << std::string(90, ' '); 
-                tui::gotoxy(X0, footerY - 2);
-                tui::setColor(tui::FG_ALERT);
-                std::cout << "Dinh dang ngay khong dung. Moi nhap lai!";
-                tui::resetColor();
-                tui::gotoxy(ntX, ntY); std::cout << std::string(16, ' ');
-                continue;
-            }
-            // 2. Kiểm tra logic: Ngày trả < Ngày mượn
-            if (diff_days(ngayTra, target->ngayMuon) < 0) {
-                tui::gotoxy(X0, footerY - 2);
-                std::cout << std::string(90, ' '); 
-                tui::gotoxy(X0, footerY - 2);
-                tui::setColor(tui::FG_ALERT);
-                std::cout << "Loi: Ngay tra khong hop le (Ngay tra phai be hon ngay muon)";
-                tui::resetColor();
-                tui::gotoxy(ntX, ntY); std::cout << std::string(16, ' ');
-                continue;
-            }
             tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
-            break;
+            ngayTra = parse_date_ddmmyyyy(s);
+            // 1. Kiểm tra định dạng ngày
+            if (!is_valid_date(ngayTra)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Dinh dang ngay khong dung. Moi nhap lai!"; tui::resetColor();
+                tui::gotoxy(ntX, ntY); std::cout << std::string(16, ' ');
+                continue;
+            }
+            // 2. Kiểm tra khoảng năm
+            if (ngayTra.y < 1500 || ngayTra.y > currentYear) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Nam khong hop le"; tui::resetColor();
+                tui::gotoxy(ntX, ntY); std::cout << std::string(16, ' ');
+                continue;
+            }
+            // 3. Kiểm tra logic: Ngày trả phải >= Ngày mượn
+            if (diff_days(ngayTra, target->ngayMuon) < 0) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Ngay tra khong duoc nho hon Ngay muon ("
+                    << target->ngayMuon.d << "/" << target->ngayMuon.m << "/" << target->ngayMuon.y << ")";
+                tui::resetColor();
+                tui::gotoxy(ntX, ntY); std::cout << std::string(16, ' ');
+                continue;
+            }
+            break; 
         }
         target->trangThai = MT_DA_TRA;
         target->ngayTra = ngayTra;
@@ -1367,16 +1391,16 @@ namespace menutui {
         auto PAD = [](const std::string& s, int w)->std::string {
             if ((int)s.size() >= w) return s.substr(0, w);
             return s + std::string(w - (int)s.size(), ' ');
-        };
+            };
         auto DASH = [](int n)->std::string { return std::string(n, '-'); };
         auto fmt_date = [](const Date& d)->std::string {
             char buf[16]; std::snprintf(buf, sizeof(buf), "%02d/%02d/%04d", d.d, d.m, d.y);
             return std::string(buf);
-        };
+            };
         tui::clearScreen();
         tui::drawBox(2, 1, w, h, "MUON / TRA  >  DANH SACH DANG MUON CUA DOC GIA");
         int y = Y0 + 1;
-        tui::gotoxy(X0, y); std::cout << "Nhap MA THE: ";int theX = X0 + 14, theY = y; y += 2;
+        tui::gotoxy(X0, y); std::cout << "Nhap MA THE: "; int theX = X0 + 14, theY = y; y += 2;
         tui::gotoxy(X0, y); std::cout << "Nhap ngay hien tai (dd/mm/yyyy): "; int dateX = X0 + 34, dateY = y; y += 2;
         tui::print_footer_hints(4, footerY, "[Enter] Xac nhan  -  [Esc] Quay lai");
         _flush_input_nonblock();
@@ -1390,31 +1414,45 @@ namespace menutui {
             tui::press_any_key_to_back(4, footerY - 1); return;
         }
         Date today{};
+        int currentYear = today_date().y;
         while (true) {
             std::string s; int r = _read_line_allow_esc_if_empty(dateX, dateY, 16, s);
             if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(110, ' '); 
             today = parse_date_ddmmyyyy(s);
-            if (is_valid_date(today)) break;
-            tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
-            std::cout << "Ngay khong hop le. Moi nhap lai!"; tui::resetColor();
-            tui::gotoxy(dateX, dateY); std::cout << std::string(20, ' ');
+            if (!is_valid_date(today)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Ngay khong hop le. Moi nhap lai!"; tui::resetColor();
+                tui::gotoxy(dateX, dateY); std::cout << std::string(20, ' ');
+                continue;
+            }
+            if (today.y < 1500 || today.y > currentYear) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Nam khong hop le"; tui::resetColor();
+                tui::gotoxy(dateX, dateY); std::cout << std::string(20, ' ');
+                continue;
+            }
+            break;
         }
         struct Row { std::string maSach, isbn, ten; Date ngayMuon; int soNgay; };
         std::vector<Row> rows;
         for (MuonTraNode* p = pNode->info.mtHead; p; p = p->next) {
             if (p->trangThai == MT_DANG_MUON) {
-                Row r;
-                r.maSach = p->maSach;
-                r.isbn = masach_to_isbn(p->maSach);
-                if (const DauSach* ds = tim_dau_sach_theo_isbn(dsArr, r.isbn)) {
-                    r.ten = ds->tenSach;
+                int diff = diff_days(today, p->ngayMuon);
+                if (diff >= 0) {
+                    Row r;
+                    r.maSach = p->maSach;
+                    r.isbn = masach_to_isbn(p->maSach);
+                    if (const DauSach* ds = tim_dau_sach_theo_isbn(dsArr, r.isbn)) {
+                        r.ten = ds->tenSach;
+                    }
+                    else {
+                        r.ten = "";
+                    }
+                    r.ngayMuon = p->ngayMuon;
+                    r.soNgay = diff;
+                    rows.push_back(r);
                 }
-                else {
-                    r.ten = "";
-                }
-                r.ngayMuon = p->ngayMuon;
-                r.soNgay = diff_days(today, r.ngayMuon); 
-                rows.push_back(r);
             }
         }
         tui::gotoxy(X0, y++); {
@@ -1423,7 +1461,8 @@ namespace menutui {
         }
         y++;
         if (rows.empty()) {
-            tui::gotoxy(X0, y++); std::cout << "(Khong co sach dang muon.)";
+            tui::gotoxy(X0, y++);
+            std::cout << "(Khong co sach dang muon nao truoc hoac trong ngay " << fmt_date(today) << ".)";
             tui::press_any_key_to_back(4, footerY - 1); return;
         }
         std::string header = PAD("STT", CW_STT) + " | "
@@ -1447,7 +1486,7 @@ namespace menutui {
             tui::gotoxy(X0, y++); std::cout << line;
             if (y > yMax) {
                 tui::press_any_key_to_back(4, footerY - 1);
-                tui::clearScreen(); tui::drawBox(2, 1, w, h, "MUON / TRA  >  DANH SACH DANG MUON CUA DOC GIA");y = 5;
+                tui::clearScreen(); tui::drawBox(2, 1, w, h, "MUON / TRA  >  DANH SACH DANG MUON CUA DOC GIA"); y = 5;
                 tui::gotoxy(X0, y++); std::cout << header;
                 tui::gotoxy(X0, y++); std::cout << sep;
             }
@@ -1514,14 +1553,25 @@ namespace menutui {
         tui::print_footer_hints(4, footerY, "[Up/Down] Trang truoc/sau  -  [Esc] Quay lai");
         _flush_input_nonblock();
         Date today{};
+        int currentYear = today_date().y; 
         while (true) {
             std::string s; int r = _read_line_allow_esc_if_empty(dateX, dateY, 16, s);
             if (r == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
             today = parse_date_ddmmyyyy(s);
-            if (is_valid_date(today)) break;
-            tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
-            std::cout << "Ngay khong hop le. Moi nhap lai!"; tui::resetColor();
-            tui::gotoxy(dateX, dateY); std::cout << std::string(20, ' ');
+            if (!is_valid_date(today)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Ngay khong hop le. Moi nhap lai!"; tui::resetColor();
+                tui::gotoxy(dateX, dateY); std::cout << std::string(20, ' ');
+                continue;
+            }
+            if (today.y < 1500 || today.y > currentYear) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Nam khong hop le"; tui::resetColor();
+                tui::gotoxy(dateX, dateY); std::cout << std::string(20, ' ');
+                continue;
+            }
+            break;
         }
         std::vector<TKQuaHanRow> rows = thongke_qua_han(root, dsArr, today);
         const int PAGE = 14;
@@ -1558,7 +1608,7 @@ namespace menutui {
             size_t to = std::min(total, from + PAGE);
             int yOut = tableY;
             for (size_t i = from; i < to; ++i) {
-                const TKQuaHanRow& r = rows[i]; // Dùng struct từ cautruc.h
+                const TKQuaHanRow& r = rows[i]; 
                 std::string tenCut = (int)r.tenSach.size() > CW_TEN ? r.tenSach.substr(0, CW_TEN) : r.tenSach;
                 tui::gotoxy(X0, yOut++);
                 std::cout << PAD(std::to_string((int)i + 1), CW_STT) << " | "
