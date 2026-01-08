@@ -23,6 +23,7 @@ struct Date {
     int m; 
     int y; 
 };
+//----------------- Danh mục sách -----------------
 struct DanhMucSachNode {
     std::string maSach;        // "ISBN-<idx>"
     TrangThaiBanSao trangThai; // cho muon / da muon 
@@ -31,6 +32,7 @@ struct DanhMucSachNode {
     DanhMucSachNode() : trangThai(BANSAO_CHO_MUON), next(NULL) {
     }
 };
+//----------------- Đầu sách -----------------
 struct DauSach {
     std::string ISBN;             // 9 chữ số
     std::string tenSach;
@@ -46,6 +48,7 @@ struct DauSach {
         soLuotMuon(0), dmsHead(NULL) {
     }
 };
+//----------------- Mượn trả -----------------
 struct MuonTraNode {
     std::string maSach;
     Date ngayMuon;
@@ -55,6 +58,7 @@ struct MuonTraNode {
     MuonTraNode() : trangThai(MT_DANG_MUON), next(NULL) {
     }
 };
+//----------------- Độc giả -----------------
 struct DocGia {
     int maThe;            // 6 chữ số
     std::string ho;
@@ -65,6 +69,7 @@ struct DocGia {
     DocGia() : maThe(0), phai("Nam"), trangThaiThe(1), mtHead(NULL) {
     }
 };
+//----------------- Cây nhị phân độc giả -----------------
 struct DocGiaNode {
     DocGia info;
     DocGiaNode* left;
@@ -108,22 +113,14 @@ inline std::string trim(const std::string& s) {
     return rtrim_copy(ltrim_copy(s));
 }
 // ----------------- Chuyển đỗi kí tự thành chuỗi in hoa  -----------------
-// chuyển đổi các ký tự thường thành ký tự in hoa
-inline char _to_upper_ascii(char ch) {
-    if (ch >= 'a' && ch <= 'z') {
-        return static_cast<char>(ch - 'a' + 'A');
-    }
-    return ch;
+// Hàm chuẩn hóa chuỗi sang chữ hoa 
+inline std::string to_upper_no_accents(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
+        return std::toupper(c);
+        });
+    return s;
 }
-// duyệt qua toàn bộ chuỗi và chuyển tất cả các ký tự thành chữ in hoa
-inline std::string to_upper_no_accents(const std::string& s) {
-    std::string out;
-    out.reserve(s.size());
-    for (size_t i = 0; i < s.size(); ++i) {
-        out.push_back(_to_upper_ascii(s[i]));
-    }
-    return out;
-}
+// Hàm chuẩn hóa kết hợp trim 
 inline std::string chuan_hoa_str(const std::string& s) {
     return to_upper_no_accents(trim(s));
 }
@@ -179,6 +176,7 @@ inline int days_between(const Date& a, const Date& b) {
     }
     return date_to_serial_day(b) - date_to_serial_day(a);
 }
+// b - a
 inline int diff_days(const Date& b, const Date& a) {
     return days_between(a, b);
 }

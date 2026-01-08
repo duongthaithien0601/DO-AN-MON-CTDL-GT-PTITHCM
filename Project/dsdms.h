@@ -72,7 +72,6 @@ inline void dms_append_tail(DauSach* ds, DanhMucSachNode* node) {
     }
     ds->soLuongBanSao++;
 }
-// Gỡ một node, tự giảm soLuongBanSao.
 inline bool dms_detach_node(DauSach* ds, DanhMucSachNode* target) {
     if (ds == NULL || target == NULL) {
         return false;
