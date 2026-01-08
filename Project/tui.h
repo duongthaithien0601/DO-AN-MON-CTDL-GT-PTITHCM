@@ -12,13 +12,11 @@
 #endif
 
 namespace tui {
-	// ===================== Color codes =====================
     enum : int {
         FG_OK = 10,
         FG_ALERT = 12,
         FG_HL = 14
     };
-    // ===================== Key codes =====================
     enum : int {
         K_NONE = 0,
         K_LEFT = 1,
@@ -28,13 +26,11 @@ namespace tui {
         K_ENTER = 5,
         K_ESC = 6
     };
-	// ===================== Key event =====================
     struct KeyEvent {
         int key;
         int ch;
         KeyEvent() : key(K_NONE), ch(0) {}
     };
-    // ===================== Cursor & Clear =====================
 #ifdef _WIN32
     inline void gotoxy(int x, int y) {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -43,7 +39,6 @@ namespace tui {
         c.Y = (SHORT)((y > 0) ? (y - 1) : 0);
         SetConsoleCursorPosition(h, c);
     }
-	// ===================== Clear Screen =====================
     inline void clearScreen() {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -59,7 +54,6 @@ namespace tui {
         FillConsoleOutputAttribute(h, csbi.wAttributes, cellCount, home, &count);
         SetConsoleCursorPosition(h, home);
     }
-	// ===================== Show Cursor =====================
     inline void showCursor() {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_CURSOR_INFO info;
@@ -68,7 +62,6 @@ namespace tui {
             SetConsoleCursorInfo(h, &info);
         }
     }
-	// ===================== Hide Cursor =====================
     inline void hideCursor() {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_CURSOR_INFO info;
@@ -77,7 +70,6 @@ namespace tui {
             SetConsoleCursorInfo(h, &info);
         }
     }
-	// ===================== Color =====================
     inline void setColor(int colorCode) {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         static WORD defaultAttr = 0;
@@ -98,7 +90,6 @@ namespace tui {
         }
         SetConsoleTextAttribute(h, attr);
     }
-	// ===================== Reset Color =====================
     inline void resetColor() {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -106,17 +97,16 @@ namespace tui {
             SetConsoleTextAttribute(h, csbi.wAttributes);
         }
     }
-	// ===================== Read Key =====================
     inline KeyEvent readKey() {
         KeyEvent e;
         int c = _getch();
         if (c == 0 || c == 224) {
             int c2 = _getch();
             switch (c2) {
-            case 72: e.key = K_UP; break;    // Up
-            case 80: e.key = K_DOWN; break;  // Down
-            case 75: e.key = K_LEFT; break;  // Left
-            case 77: e.key = K_RIGHT; break; // Right
+            case 72: e.key = K_UP; break;    
+            case 80: e.key = K_DOWN; break;  
+            case 75: e.key = K_LEFT; break;  
+            case 77: e.key = K_RIGHT; break; 
             default: e.key = K_NONE; break;
             }
             e.ch = c2;
@@ -161,9 +151,9 @@ namespace tui {
     inline void setColor(int colorCode) {
         int ansi = 37;
         switch (colorCode) {
-        case FG_OK:    ansi = 32; break; // green
-        case FG_ALERT: ansi = 31; break; // red
-        case FG_HL:    ansi = 33; break; // yellow
+        case FG_OK:    ansi = 32; break; 
+        case FG_ALERT: ansi = 31; break; 
+        case FG_HL:    ansi = 33; break; 
         default:       ansi = 37; break;
         }
         std::printf("\x1b[%dm", ansi);
@@ -209,7 +199,6 @@ namespace tui {
         return e;
     }
 #endif
-	// ===================== Drawing helpers =====================
     inline void drawHLine(int x, int y, int w) {
         if (w <= 0) { return; }
         gotoxy(x, y);
@@ -250,7 +239,6 @@ namespace tui {
         std::cout << text;
         resetColor();
     }
-    // ===================== UX helpers =====================
     inline void press_any_key_to_back(int x, int y) {
         gotoxy(x, y);
         setColor(FG_HL);

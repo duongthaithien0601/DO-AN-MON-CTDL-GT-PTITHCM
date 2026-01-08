@@ -3,7 +3,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <algorithm>
 #include <cstdio>
 #include "cautruc.h"
 #include "dsdms.h"
@@ -113,34 +112,49 @@ inline void giai_phong_cay_doc_gia(DocGiaNode*& root) {
 
 // ========================= LƯU / ĐỌC: ĐẦU SÁCH =========================
 // Lưu danh sách đầu sách
-inline bool save_dau_sach(const std::vector<DauSach*>& dsArr) {
+inline bool save_dau_sach(const DanhSachDauSach& dsArr) {
     ensure_data_dir();
     std::ofstream fo(path_file_dausach().c_str());
     if (!fo) { return false; }
-    for (size_t i = 0; i < dsArr.size(); i++) {
-        const DauSach* ds = dsArr[i]; if (ds == NULL) { continue; }
-        std::vector<std::string> cols;
-        cols.push_back(ds->ISBN);
-        cols.push_back(ds->tenSach);
-        cols.push_back(ds->tacGia);
-        cols.push_back(ds->theLoai);
-        cols.push_back(to_str(ds->soTrang));
-        cols.push_back(to_str(ds->namXB));
-        cols.push_back(to_str(ds->soLuongBanSao));
-        cols.push_back(to_str(ds->soLuotMuon));
-        fo << join_bar(cols) << "\n";
+    // Duyệt mảng tĩnh
+    for (int i = 0; i < dsArr.n; i++) {
+        const DauSach* ds = dsArr.nodes[i];
+        if (ds == NULL) { continue; }
+        // Ghi trực tiếp không dùng vector nối chuỗi
+        fo << ds->ISBN << "|"
+            << ds->tenSach << "|"
+            << ds->tacGia << "|"
+            << ds->theLoai << "|"
+            << ds->soTrang << "|"
+            << ds->namXB << "|"
+            << ds->soLuongBanSao << "|"
+            << ds->soLuotMuon << "\n";
     }
     return true;
 }
 // Đọc danh sách đầu sách
-inline bool load_dau_sach(std::vector<DauSach*>& dsArr) {
-    dsArr.clear();
+inline bool load_dau_sach(DanhSachDauSach& dsArr) {
+    dsArr.n = 0; 
     std::ifstream fi(path_file_dausach().c_str());
     if (!fi) { return true; }
     std::string line;
     while (std::getline(fi, line)) {
-        std::vector<std::string> cols = split_bar(line);
-        if (cols.size() < 8) { continue; }
+        if (line.empty()) continue;
+        std::string cols[8];
+        int colIdx = 0;
+        std::string cur = "";
+        for (char c : line) {
+            if (c == '|') {
+                if (colIdx < 8) cols[colIdx++] = cur;
+                cur = "";
+            }
+            else {
+                cur += c;
+            }
+        }
+        if (colIdx < 8) cols[colIdx++] = cur; 
+
+        if (colIdx < 8) continue; 
         DauSach* ds = new DauSach();
         ds->ISBN = cols[0];
         ds->tenSach = cols[1];
@@ -151,51 +165,64 @@ inline bool load_dau_sach(std::vector<DauSach*>& dsArr) {
         ds->soLuongBanSao = std::atoi(cols[6].c_str());
         ds->soLuotMuon = std::atoi(cols[7].c_str());
         ds->dmsHead = NULL;
-        dsArr.push_back(ds);
+        // Thêm vào mảng tĩnh
+        if (!is_full(dsArr)) {
+            dsArr.nodes[dsArr.n++] = ds;
+        }
     }
     return true;
 }
 
 // ========================= LƯU / ĐỌC: DANH MỤC SÁCH =========================
-// Lưu danh mục sách
-inline bool save_dms(const std::vector<DauSach*>& dsArr) {
+// 1. Lưu danh mục sách 
+inline bool save_dms(const DanhSachDauSach& dsArr) {
     ensure_data_dir();
     std::ofstream fo(path_file_dms().c_str());
     if (!fo) { return false; }
-    for (size_t i = 0; i < dsArr.size(); i++) {
-        const DauSach* ds = dsArr[i]; if (ds == NULL) { continue; }
+    // Duyệt mảng tĩnh nodes từ 0 đến n
+    for (int i = 0; i < dsArr.n; i++) {
+        const DauSach* ds = dsArr.nodes[i];
+        if (ds == NULL) { continue; }
         DanhMucSachNode* p = ds->dmsHead;
-        while (p != NULL) {
-            std::vector<std::string> cols;
-            cols.push_back(ds->ISBN);
-            cols.push_back(p->maSach);
-            cols.push_back(to_str(static_cast<int>(p->trangThai)));
-            cols.push_back(p->viTri);
-            fo << join_bar(cols) << "\n";
+        while (p != NULL) {            
+            fo << ds->ISBN << "|"
+                << p->maSach << "|"
+                << (int)p->trangThai << "|"
+                << p->viTri << "\n";
+
             p = p->next;
         }
     }
     return true;
 }
-// Đọc danh mục sách
-inline bool load_dms(std::vector<DauSach*>& dsArr) {
+// 2. Đọc danh mục sách 
+inline bool load_dms(DanhSachDauSach& dsArr) {
     std::ifstream fi(path_file_dms().c_str());
-    if (!fi) { return true; }
+    if (!fi) { return true; } // File chưa tồn tại thì coi như rỗng, không lỗi
     std::string line;
     while (std::getline(fi, line)) {
-        std::vector<std::string> cols = split_bar(line);
-        if (cols.size() < 4) { continue; }
-        std::string isbn = cols[0];
-        std::string maSach = cols[1];
-        int tt = std::atoi(cols[2].c_str());
-        std::string viTri = cols[3];
+        if (line.empty()) continue;
+        size_t p1 = line.find('|');
+        if (p1 == std::string::npos) continue;
+        size_t p2 = line.find('|', p1 + 1);
+        if (p2 == std::string::npos) continue;
+        size_t p3 = line.find('|', p2 + 1);
+        if (p3 == std::string::npos) continue;
+        std::string isbn = line.substr(0, p1);
+        std::string maSach = line.substr(p1 + 1, p2 - p1 - 1);
+        std::string sTrangThai = line.substr(p2 + 1, p3 - p2 - 1);
+        std::string viTri = line.substr(p3 + 1);
+        // Tìm đầu sách trong danh sách đã load
         DauSach* ds = tim_dau_sach_theo_isbn(dsArr, isbn);
-        if (ds == NULL) { continue; }
+        if (ds == NULL) { continue; } // Nếu không thấy ISBN tương ứng thì bỏ qua
+        // Tạo node bản sao
+        int tt = std::atoi(sTrangThai.c_str());
         TrangThaiBanSao t = (tt == BANSAO_DA_MUON ? BANSAO_DA_MUON : BANSAO_CHO_MUON);
         DanhMucSachNode* node = new DanhMucSachNode();
         node->maSach = maSach;
         node->trangThai = t;
         node->viTri = viTri;
+        // Thêm vào DSLK đơn
         dms_append_tail(ds, node);
     }
     return true;
@@ -281,13 +308,27 @@ inline bool save_muon_tra(DocGiaNode* root) {
     return true;
 }
 // Đọc danh sách mượn trả sách
-inline bool load_muon_tra(std::vector<DauSach*>& dsArr, DocGiaNode*& root) {
+inline bool load_muon_tra(const DanhSachDauSach& dsArr, DocGiaNode*& root) {
     std::ifstream fi(path_file_muontra().c_str());
     if (!fi) { return true; }
     std::string line;
     while (std::getline(fi, line)) {
-        std::vector<std::string> cols = split_bar(line);
-        if (cols.size() < 5) { continue; }
+        if (line.empty()) continue;
+        // Tách chuỗi thủ công
+        std::string cols[5];
+        int colIdx = 0;
+        std::string cur = "";
+        for (char c : line) {
+            if (c == '|') {
+                if (colIdx < 5) cols[colIdx++] = cur;
+                cur = "";
+            }
+            else {
+                cur += c;
+            }
+        }
+        if (colIdx < 5) cols[colIdx++] = cur;
+        if (colIdx < 5) continue;
         int maThe = std::atoi(cols[0].c_str());
         std::string maSach = cols[1];
         Date ngayMuon{ 0,0,0 }, ngayTra{ 0,0,0 };
@@ -302,16 +343,16 @@ inline bool load_muon_tra(std::vector<DauSach*>& dsArr, DocGiaNode*& root) {
         node->ngayTra = ngayTra;
         node->trangThai = static_cast<TrangThaiMuonTra>(tt);
         node->next = dgNode->info.mtHead;
-        dgNode->info.mtHead = node;        
+        dgNode->info.mtHead = node;       
         DauSach* ds = tim_dau_sach_theo_isbn(dsArr, masach_to_isbn(maSach));
         if (ds != NULL) {
             DanhMucSachNode* copy = dms_find_by_masach(ds, maSach);
             if (copy != NULL) {
                 if (node->trangThai == MT_DANG_MUON) {
-                    copy->trangThai = BANSAO_DA_MUON;   // đang mượn
+                    copy->trangThai = BANSAO_DA_MUON;
                 }
                 else {
-                    copy->trangThai = BANSAO_CHO_MUON;  // đã trả 
+                    copy->trangThai = BANSAO_CHO_MUON;
                 }
             }
         }
@@ -321,21 +362,20 @@ inline bool load_muon_tra(std::vector<DauSach*>& dsArr, DocGiaNode*& root) {
 
 // ========================= LƯU / ĐỌC: TẤT CẢ DỮ LIỆU =========================
 // Lưu tất cả dữ liệu
-inline bool save_all_data(const std::vector<DauSach*>& dsArr, DocGiaNode* root) {
+inline bool save_all_data(const DanhSachDauSach& dsArr, DocGiaNode* root) {
     bool ok1 = save_dau_sach(dsArr);
     bool ok2 = save_dms(dsArr);
     bool ok3 = save_doc_gia(root);
     bool ok4 = save_muon_tra(root);
     return ok1 && ok2 && ok3 && ok4;
 }
-// Đọc tất cả dữ liệu
-inline bool load_all_data(std::vector<DauSach*>& dsArr, DocGiaNode*& root) {
-    giai_phong_vector_dausach(dsArr);
+inline bool load_all_data(DanhSachDauSach& dsArr, DocGiaNode*& root) {   
+    giai_phong_danh_sach_dausach(dsArr);
     giai_phong_cay_doc_gia(root);
     bool ok1 = load_dau_sach(dsArr);
-    bool ok2 = load_dms(dsArr);  
-    for (size_t i = 0; i < dsArr.size(); ++i) {
-        dms_recount_update(dsArr[i]);
+    bool ok2 = load_dms(dsArr);
+    for (int i = 0; i < dsArr.n; ++i) {
+        dms_recount_update(dsArr.nodes[i]);
     }
     bool ok3 = load_doc_gia(root);
     bool ok4 = load_muon_tra(dsArr, root);

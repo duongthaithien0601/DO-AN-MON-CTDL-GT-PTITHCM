@@ -1,33 +1,9 @@
 ﻿#pragma once
 #include <string>
-#include <vector>
 #include "cautruc.h"
+#include "thongke.h" 
 
 // =================== TIỆN ÍCH DSLK ===================
-// Đếm tổng số bản sao (node) trong DMS của một đầu sách.
-inline int dms_count_total(const DauSach* ds) {
-    if (ds == NULL) {
-        return 0;
-    }
-    int dem = 0;
-    for (const DanhMucSachNode* p = ds->dmsHead; p != NULL; p = p->next) {
-        dem++;
-    }
-    return dem;
-}
-// Đếm số bản sao đang được mượn.
-inline int dms_count_borrowed(const DauSach* ds) {
-    if (ds == NULL) {
-        return 0;
-    }
-    int dem = 0;
-    for (const DanhMucSachNode* p = ds->dmsHead; p != NULL; p = p->next) {
-        if (p->trangThai == BANSAO_DA_MUON) {
-            dem++;
-        }
-    }
-    return dem;
-}
 // Tìm bản sao rảnh (trangThai == BANSAO_CHO_MUON) đầu tiên.
 inline DanhMucSachNode* dms_find_first_available(DauSach* ds) {
     if (ds == NULL) {
@@ -72,6 +48,7 @@ inline void dms_append_tail(DauSach* ds, DanhMucSachNode* node) {
     }
     ds->soLuongBanSao++;
 }
+// Tách (gỡ) một node khỏi DSLK (không giải phóng bộ nhớ).
 inline bool dms_detach_node(DauSach* ds, DanhMucSachNode* target) {
     if (ds == NULL || target == NULL) {
         return false;
@@ -105,18 +82,17 @@ inline void dms_free_all(DanhMucSachNode*& head) {
     head = NULL;
 }
 // Lấy danh sách mã sách (phục vụ lưu trữ/in bảng).
-inline std::vector<std::string> dms_list_masach(const DauSach* ds) {
-    std::vector<std::string> kq;
+inline void dms_list_masach(const DauSach* ds, std::string outArr[], int& outN, int maxE = 1000) {
+    outN = 0;
     if (ds == NULL) {
-        return kq;
+        return;
     }
     for (const DanhMucSachNode* p = ds->dmsHead; p != NULL; p = p->next) {
-        kq.push_back(p->maSach);
+        if (outN < maxE) {
+            outArr[outN++] = p->maSach;
+        }
     }
-    return kq;
 }
-// Nếu toàn bộ bản sao có cùng vị trí, trả về vị trí đó; ngược lại trả chuỗi rỗng.
-// Đặt vị trí cho tất cả bản sao.
 
 // =================== ĐÁNH DẤU MƯỢN / TRẢ ===================
 // Đánh dấu mượn sách.
@@ -148,5 +124,5 @@ inline void dms_recount_update(DauSach* ds) {
     if (ds == NULL) {
         return;
     }
-    ds->soLuongBanSao = dms_count_total(ds);
+    ds->soLuongBanSao = dms_count_total(ds); 
 }

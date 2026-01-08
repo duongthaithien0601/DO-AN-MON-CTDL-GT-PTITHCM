@@ -6,9 +6,10 @@
 #include <cctype>
 #include <ctime>
 #include <sstream>
-#include <random>
 
 // ======================= CẤU TRÚC DỮ LIỆU CHÍNH =======================
+#define MAX_DOC_GIA 20000
+#define MAX_DAU_SACH 1000
 enum { HAN_MUON_NGAY = 7 };
 enum TrangThaiBanSao {
     BANSAO_CHO_MUON = 0,
@@ -19,9 +20,9 @@ enum TrangThaiMuonTra {
     MT_DA_TRA = 1,
 };
 struct Date {
-    int d; 
-    int m; 
-    int y; 
+    int d;
+    int m;
+    int y;
 };
 //----------------- Danh mục sách -----------------
 struct DanhMucSachNode {
@@ -46,6 +47,15 @@ struct DauSach {
     DauSach()
         : soTrang(0), namXB(0), soLuongBanSao(0),
         soLuotMuon(0), dmsHead(NULL) {
+    }
+};
+//----------------- Danh sách đầu sách  -----------------
+struct DanhSachDauSach {
+    DauSach* nodes[MAX_DAU_SACH];
+    int n;
+    DanhSachDauSach() {
+        n = 0;
+        for (int i = 0; i < MAX_DAU_SACH; i++) nodes[i] = NULL;
     }
 };
 //----------------- Mượn trả -----------------
@@ -77,6 +87,7 @@ struct DocGiaNode {
     explicit DocGiaNode(const DocGia& v) : info(v), left(NULL), right(NULL) {
     }
 };
+//----------------- Thống kê -----------------
 struct TKQuaHanRow {
     int maThe = 0;
     std::string hoTen;
@@ -88,8 +99,7 @@ struct TKQuaHanRow {
 };
 
 // ======================= HÀM TIỆN ÍCH =======================
-// ----------------- Chuỗi: trim  -----------------
-// Cắt bỏ toàn bộ khoảng trắng ở đầu (bên trái)
+// Cắt khoảng trắng đầu
 inline std::string ltrim_copy(const std::string& s) {
     size_t i = 0;
     while (i < s.size() && std::isspace(static_cast<unsigned char>(s[i])) != 0) {
@@ -97,50 +107,43 @@ inline std::string ltrim_copy(const std::string& s) {
     }
     return s.substr(i);
 }
-// Cắt bỏ toàn bộ khoảng trắng ở cuối (bên phải) của chuỗi
+// Cắt khoảng trắng đuôi
 inline std::string rtrim_copy(const std::string& s) {
-    if (s.empty()) {
-        return s;
-    }
+    if (s.empty()) return s;
     size_t i = s.size();
     while (i > 0 && std::isspace(static_cast<unsigned char>(s[i - 1])) != 0) {
         i--;
     }
     return s.substr(0, i);
 }
-// Kết hợp cả hai hàm trên để cắt bỏ khoảng trắng ở cả đầu và cuối chuỗi.
+// Cắt 2 đầu
 inline std::string trim(const std::string& s) {
     return rtrim_copy(ltrim_copy(s));
 }
-// ----------------- Chuyển đỗi kí tự thành chuỗi in hoa  -----------------
-// Hàm chuẩn hóa chuỗi sang chữ hoa 
+// Chuyển chữ hoa
 inline std::string to_upper_no_accents(std::string s) {
     std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
         return std::toupper(c);
         });
     return s;
 }
-// Hàm chuẩn hóa kết hợp trim 
+// Chuẩn hóa (Trim + Upper)
 inline std::string chuan_hoa_str(const std::string& s) {
     return to_upper_no_accents(trim(s));
 }
 // ----------------- Ngày tháng -----------------
-// Kiểm tra tính hợp lệ của ngày tháng 
-inline bool is_valid_date(const Date& a) {    
-    if (a.y <= 0 || a.m < 1 || a.m > 12 || a.d <= 0) {
-        return false;
-    }    
-    static const int daysInMonth[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };    
+// Kiểm tra tính hợp lệ của ngày tháng
+inline bool is_valid_date(const Date& a) {
+    if (a.y <= 0 || a.m < 1 || a.m > 12 || a.d <= 0) return false;
+    static const int daysInMonth[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
     if (a.m == 2) {
-        int maxFeb = 28;        
-        if ((a.y % 400 == 0) || (a.y % 4 == 0 && a.y % 100 != 0)) {
-            maxFeb = 29;
-        }
+        int maxFeb = 28;
+        if ((a.y % 400 == 0) || (a.y % 4 == 0 && a.y % 100 != 0)) maxFeb = 29;
         return a.d <= maxFeb;
-    }    
+    }
     return a.d <= daysInMonth[a.m];
 }
-// Phân tích chuỗi định dạng "DD/MM/YYYY" thành Date
+// Phân tích chuỗi thành ngày tháng định dạng dd/mm/yyyy
 inline bool parse_date_ddmmyyyy(const std::string& s, Date& out) {
     int d, m, y;
     char c1, c2;
@@ -152,36 +155,32 @@ inline bool parse_date_ddmmyyyy(const std::string& s, Date& out) {
     }
     return false;
 }
-//Phiên bản trả về Date trực tiếp
+// Phân tích chuỗi thành ngày tháng định dạng dd/mm/yyyy (trả về Date)
 inline Date parse_date_ddmmyyyy(const std::string& s) {
     Date d{ 0,0,0 };
     (void)parse_date_ddmmyyyy(s, d);
     return d;
 }
-// Tính số ngày giữa hai ngày (b = ngày sau, a = ngày trước)
+// Lấy ngày hiện tại
 inline int date_to_serial_day(const Date& a) {
     int y = a.y;
     int m = a.m;
     int d = a.d;
-    if (m < 3) {
-        y -= 1;
-        m += 12;
-    }
+    if (m < 3) { y -= 1; m += 12; }
     return 365 * y + y / 4 - y / 100 + y / 400 + (153 * m - 457) / 5 + d - 306;
 }
-// a -> b
+// Tính số ngày giữa 2 ngày
 inline int days_between(const Date& a, const Date& b) {
-    if (!is_valid_date(a) || !is_valid_date(b)) {
-        return 0;
-    }
+    if (!is_valid_date(a) || !is_valid_date(b)) return 0;
     return date_to_serial_day(b) - date_to_serial_day(a);
 }
-// b - a
+// Tính số ngày từ a đến b (b - a)
 inline int diff_days(const Date& b, const Date& a) {
     return days_between(a, b);
 }
-// ----------------- Các tiện ích còn lại  -----------------
-// Kiểm tra tên hợp lệ (không số, không ký tự đặc biệt)
+
+// ----------------- Validate -----------------
+// Kiểm tra tên (không chứa số và ký tự đặc biệt)
 inline bool is_valid_name(const std::string& s) {
     for (unsigned char c : s) {
         if (std::isdigit(c)) return false;
@@ -189,7 +188,7 @@ inline bool is_valid_name(const std::string& s) {
     }
     return true;
 }
-// Kiểm tra chuỗi chỉ chứa số
+// Kiểm tra chuỗi toàn chữ số
 inline bool is_all_digits(const std::string& s) {
     if (s.empty()) return false;
     for (char c : s) {
@@ -197,7 +196,7 @@ inline bool is_all_digits(const std::string& s) {
     }
     return true;
 }
-// Kiểm tra chuỗi chỉ chứa chữ cái
+// Kiểm tra chuỗi toàn chữ cái
 inline bool is_all_alpha(const std::string& s) {
     if (s.empty()) return false;
     for (char c : s) {
@@ -205,45 +204,16 @@ inline bool is_all_alpha(const std::string& s) {
     }
     return true;
 }
-// Tách ISBN từ "ISBN-idx"
+// ----------------- Mã sách / ISBN -----------------
+// Lấy ISBN từ mã sách
 inline std::string masach_to_isbn(const std::string& maSach) {
     size_t pos = maSach.find('-');
-    if (pos == std::string::npos) {
-        return maSach;
-    }
+    if (pos == std::string::npos) return maSach;
     return maSach.substr(0, pos);
 }
-// Tạo mã bản sao "ISBN-idx"
+// Tạo mã sách từ ISBN và chỉ số
 inline std::string make_masach(const std::string& isbn, int idx) {
     std::ostringstream oss;
     oss << trim(isbn) << "-" << idx;
     return oss.str();
-}
-// Kiểm tra ISBN đã tồn tại trong danh sách đầu sách chưa
-inline bool is_isbn_exists(const std::vector<DauSach*>& arr, const std::string& isbn);
-// Hàm sinh ISBN ngẫu nhiên
-inline std::string gen_isbn_unique(const std::vector<DauSach*>& dsArr) {
-    static std::mt19937 rng(static_cast<unsigned int>(std::time(NULL)));
-    static std::uniform_int_distribution<int> dist(100000000, 999999999);
-    for (int i = 0; i < 5000; i++) {
-        int x = dist(rng);
-        std::string cand = std::to_string(x); 
-        if (!is_isbn_exists(dsArr, cand)) {
-            return cand;
-        }
-    }
-    int maxVal = 100000000;
-    for (const auto* ds : dsArr) {
-        if (ds != NULL && ds->ISBN.length() == 9 && is_all_digits(ds->ISBN)) {
-            try {
-                int v = std::stoi(ds->ISBN);
-                if (v > maxVal) maxVal = v;
-            }
-            catch (...) {}
-        }
-    }
-    if (maxVal < 999999999) {
-        return std::to_string(maxVal + 1);
-    }
-    return "999999999";
 }
