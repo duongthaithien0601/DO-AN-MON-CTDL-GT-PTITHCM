@@ -256,40 +256,92 @@ namespace menutui {
     }
     //================== Xóa độc giả ==================//
     inline void form_xoa_doc_gia_tui(DocGiaNode*& root) {
-        const int w = 118, h = 12, X0 = 4, Y0 = 3; const int footerY = 1 + h - 2;
-        tui::clearScreen(); tui::drawBox(2, 1, w, h, "QUAN LY DOC GIA  >  XOA DOC GIA");
+        const int w = 118, h = 12, X0 = 4, Y0 = 3;
+        const int footerY = 1 + h - 2;
+        tui::clearScreen();
+        tui::drawBox(2, 1, w, h, "QUAN LY DOC GIA  >  XOA DOC GIA");
         int y = Y0 + 1;
-        tui::gotoxy(X0, y); std::cout << "Nhap ma the muon xoa : "; int maX = X0 + 24, maY = y;
+        tui::gotoxy(X0, y); std::cout << "Nhap ma the muon xoa : ";
+        int maX = X0 + 24, maY = y;
         tui::print_footer_hints(4, footerY, "[Enter] Xac nhan  -  [Esc] Quay lai");
         _flush_input_nonblock();
-        std::string sMa; int rr = _read_line_allow_esc_if_empty(maX, maY, 12, sMa);
-        if (rr == -1) return;
-        int maThe = -1; try { maThe = std::stoi(sMa); }
-        catch (...) {}
+        int maThe = -1;
+        while (true) {
+            std::string sMa;
+            int rr = _read_line_allow_esc_if_empty(maX, maY, 12, sMa);
+            if (rr == -1) return;
+            tui::gotoxy(X0, footerY - 2); std::cout << std::string(90, ' ');
+            if (sMa.empty()) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Ma the khong duoc de trong.";
+                tui::resetColor();
+                tui::gotoxy(maX, maY); std::cout << std::string(12, ' '); 
+                continue;
+            }
+            if (!is_all_digits(sMa)) {
+                tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Ma the chi duoc chua so.";
+                tui::resetColor();
+                tui::gotoxy(maX, maY); std::cout << std::string(12, ' '); 
+                continue;
+            }
+            try { maThe = std::stoi(sMa); }
+            catch (...) { maThe = -1; }
+            break; 
+        }
         if (maThe <= 0 || tim_node_doc_gia(root, maThe) == NULL) {
-            tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT); std::cout << "Ma the khong hop le hoac khong ton tai."; tui::resetColor();
-            tui::press_any_key_to_back(4, footerY - 1); return;
+            tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
+            std::cout << "Ma the khong hop le hoac khong ton tai.";
+            tui::resetColor();
+            tui::press_any_key_to_back(4, footerY - 1);
+            return;
         }
         bool ok = xoa_doc_gia_if_no_borrowing(root, maThe);
         tui::gotoxy(X0, footerY - 2);
-        if (ok) { tui::setColor(tui::FG_OK); std::cout << "Da xoa doc gia."; }
-        else { tui::setColor(tui::FG_ALERT); std::cout << "Khong the xoa: doc gia dang muon sach."; }
+        if (ok) {
+            tui::setColor(tui::FG_OK); std::cout << "Da xoa doc gia.";
+        }
+        else {
+            tui::setColor(tui::FG_ALERT); std::cout << "Khong the xoa: doc gia dang muon sach.";
+        }
         tui::resetColor();
         tui::press_any_key_to_back(4, footerY - 1);
     }
     //============== Sửa thông tin độc giả ===========//
     //============== Sửa thông tin độc giả ===========//
     inline void form_sua_doc_gia_tui(DocGiaNode*& root) {
-        const int w = 118, h = 22, X0 = 4, Y0 = 3; const int footerY = 1 + h - 2;
-        tui::clearScreen(); tui::drawBox(2, 1, w, 10, "QUAN LY DOC GIA  >  CAP NHAT DOC GIA");
+        const int w = 118, h = 22, X0 = 4, Y0 = 3;
+        const int footerY = 1 + h - 2;
+        tui::clearScreen();
+        tui::drawBox(2, 1, w, 10, "QUAN LY DOC GIA  >  CAP NHAT DOC GIA");
         int yAsk = Y0 + 1;
-        tui::gotoxy(X0, yAsk); std::cout << "Nhap ma the can cap nhat : "; int maX = X0 + 28, maY = yAsk;
+        tui::gotoxy(X0, yAsk); std::cout << "Nhap ma the can cap nhat : ";
+        int maX = X0 + 28, maY = yAsk;
         tui::print_footer_hints(4, 10 - 1, "[Enter] Xac nhan  -  [Esc] Quay lai");
         _flush_input_nonblock();
-        std::string sMa; int rma = _read_line_allow_esc_if_empty(maX, maY, 12, sMa);
-        if (rma == -1) return;
-        int maThe = -1; try { maThe = std::stoi(sMa); }
-        catch (...) {}
+        int maThe = -1;
+        while (true) {
+            std::string sMa;
+            int rma = _read_line_allow_esc_if_empty(maX, maY, 12, sMa);
+            if (rma == -1) return;
+            sMa = trim(sMa);
+            tui::gotoxy(X0, 8); std::cout << std::string(90, ' '); 
+            if (sMa.empty()) {
+                tui::gotoxy(X0, 8); tui::setColor(tui::FG_ALERT);
+                std::cout << "Ma the khong duoc de trong."; tui::resetColor();
+                tui::gotoxy(maX, maY); std::cout << std::string(12, ' ');
+                continue;
+            }
+            if (!is_all_digits(sMa)) {
+                tui::gotoxy(X0, 8); tui::setColor(tui::FG_ALERT);
+                std::cout << "Loi: Ma the chi duoc chua so."; tui::resetColor();
+                tui::gotoxy(maX, maY); std::cout << std::string(12, ' ');
+                continue;
+            }
+            try { maThe = std::stoi(sMa); }
+            catch (...) { maThe = -1; }
+            break;
+        }
         DocGiaNode* p = tim_node_doc_gia(root, maThe);
         if (!p) {
             const int footerHintY = 9;
@@ -297,7 +349,7 @@ namespace menutui {
             const int errY = msgY - 1;
             tui::gotoxy(X0, errY);
             tui::setColor(tui::FG_ALERT);
-            std::cout << "Khong tim thay.";
+            std::cout << "Khong tim thay ma the " << maThe << ".";
             tui::resetColor();
             tui::press_any_key_to_back(4, msgY);
             return;
@@ -1151,8 +1203,8 @@ namespace menutui {
         tui::clearScreen();
         tui::drawBox(2, 1, w, h, "MUON / TRA  >  MUON SACH");
         int y = Y0 + 1;
-        tui::gotoxy(X0, y); std::cout << "Nhap MA THE                  : "; int maX = X0 + 28, maY = y; y += 2;
-        tui::gotoxy(X0, y); std::cout << "Nhap ISBN                    : "; int isbnX = X0 + 28, isbnY = y; y += 2;
+        tui::gotoxy(X0, y); std::cout << "Nhap MA THE                : "; int maX = X0 + 28, maY = y; y += 2;
+        tui::gotoxy(X0, y); std::cout << "Nhap ISBN                  : "; int isbnX = X0 + 28, isbnY = y; y += 2;
         tui::gotoxy(X0, y); std::cout << "Nhap ngay muon (dd/mm/yyyy): "; int ngayX = X0 + 28, ngayY = y; y += 2;
         tui::print_footer_hints(4, footerY, "[Enter] Xac nhan  -  [Esc] Quay lai");
         _flush_input_nonblock();
@@ -1208,7 +1260,6 @@ namespace menutui {
             tui::gotoxy(X0, tableY++);
             std::cout << "(Khong co sach dang muon.)";
         }
-
         // 3. Kiểm tra điều kiện mượn
         if (pNode->info.trangThaiThe != 1) {
             tui::gotoxy(X0, footerY - 2); tui::setColor(tui::FG_ALERT);
